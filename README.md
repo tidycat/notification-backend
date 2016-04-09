@@ -8,60 +8,118 @@ This AWS Lambda notification backend will handle the notification and tag portio
 
 **This is very much a work-in-progress**
 
-## Rough Notes
 
+
+## Contents
+
+- [Features](#features)
+- [Overview](#overview)
+- [API Endpoints](#api-endpoints)
+- [Deployment](#deployment)
+- [Development](#development)
+
+
+## Features
+
+- `[WIP]`
+
+
+## Overview
+
+- `[WIP]`
+
+
+## API Endpoints
+
+- `/notifications` - `GET`: Optionally with the `fromDate` parameter (e.g.
+  `fromDate=2016-04-08T13:03:43+00:00`). Return a list of all relevant
+  notifications starting from `fromDate`. Defaults to one week in the past.
+
+- `/notifications/1234` - `GET`: Return all the information relevant to
+  notification id `1234`.
+
+- `/notifications/1234` - `PATCH`: Update the information pertinent to
+  notification id `1234`.
+
+- `/notifications/1234` - `DELETE`: Delete notification id `1234`.
+
+- `/notifications/refresh` - `POST`: Populate the user's notifications for the
+  last `n` months.
+
+- `/tags` - `GET`: Return a list of all the user-created tags.
+
+- `/tags/name` - `GET`: Return all the information relevant to tag `name`.
+
+- `/tags/name` - `PATCH`: Update the information pertinent to tag `name`.
+
+- `/tags` - `POST`: Create a new tag.
+
+- `/tags/name` - `DELETE`: Delete tag `name`.
+
+
+## Deployment
+
+
+#### Create the DynamoDB tables:
+
+- `notification`: Primary Key `thread_id`, Type `Number`.
+
+- `user-notification`: Primary Key `user_id`, Type `Number`. Sort (range) Key
+  `thread_id`, Type `Number`. Secondary Index primary key `user_id` (`Number`),
+  sort key `notification_date` (`Number`). Create as a Local Secondary Index.
+
+- `tags`: Primary Key `user_id`, Type `Number`. Sort Key `tag_name`, Type
+  `String`.
+
+
+#### Create an IAM role with a policy that looks something like:
+
+``` json
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "logs:CreateLogGroup",
+                "logs:CreateLogStream",
+                "logs:PutLogEvents",
+                "sns:Publish",
+                "sns:Subscribe"
+            ],
+            "Resource": [
+                "arn:aws:logs:*:*:*",
+                "arn:aws:sns:*"
+            ]
+        },
+        {
+            "Effect": "Allow",
+            "Action": "dynamodb:*",
+            "Resource": [
+                "arn:aws:dynamodb:<AWS REGION>:<AWS ACCOUNT ID>:table/notification",
+                "arn:aws:dynamodb:<AWS REGION>:<AWS ACCOUNT ID>:table/user-notification",
+                "arn:aws:dynamodb:<AWS REGION>:<AWS ACCOUNT ID>:table/tags"
+            ]
+        }
+    ]
+}
 ```
-- Get all user-specific notifications from that date (defaults to 1 week in the past)
-GET /notifications?fromDate=2016-04-08T13:03:43+00:00
-GET /notifications
-
-- Get the tags for a specific notification
-GET /notifications/1234
-
-- Update the tags for this notification
-PATCH /notifications/1234
-
-- Delete a notification
-DELETE /notifications/1234
-
-- Populate notifications for the last n months
-GET /notifications/refresh
-
-- Get a list of all user-created tags
-GET /tags
-
-- Get a specific tag
-GET /tags/name
-
-- Update a specific tag
-PATCH /tags/name
-
-- Create a new tag
-POST /tags
-
-- Delete a tag
-DELETE /tags/name
-```
 
 
-## DynamoDB Tables
+#### Create the Lambda function:
 
-```
-notification
-- thread_id (hash)
-
-user-notification
-- user_id (hash)
-- thread_id (range)
-- notification_date (Local secondary index)
-
-tags
-- user_id (hash)
-- tag_name (range)
-```
+- Name: `tidycat-notification-backend`
+- Runtime: `Python 2.7`
+- Upload zip file: [lambda.zip](https://github.com/tidycat/notification-backend/releases/latest)
+- Handler: `notification_backend/entrypoint.handler`
+- Role: _IAM role you created earlier_
+- Memory: 128 MB
+- Timeout: 30 seconds
 
 
-## Testing Aid
+## Development
+
+- `[WIP]`
 
 ```
 curl -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE0NjAyMTk2NTgsImdpdGh1Yl9sb2dpbiI6Im1hcnZpbnBpbnRvIiwic3ViIjoxMTU5OTQyLCJleHAiOjMyNTAzNjgwMDAwLCJnaXRodWJfdG9rZW4iOiJzaGhoIn0.qWGFKUYt5-zgNvV4YygwVAPcZv4NoKH8FaHG_a-xrzg" http://localhost:8080/tags
