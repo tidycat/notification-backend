@@ -1,0 +1,65 @@
+language: 'python'
+sudo: false
+python:
+  - "2.7.11"
+
+env:
+  global:
+    - 'AWS_DEFAULT_REGION=us-east-1'
+    - 'AWS_ACCESS_KEY_ID=AKIAJGARB35NA2OFFNYQ'
+    - secure: "R64yneY9zvPpovX9LaILJ0LFv+ZgWVqqlduCQPMl0ThiVBiMA0L1URvnnnBHmnCAWDiZSlaBR7jBlx6GNlcMwShDUAm6c7XRWTyXnPhWXF+0wkSjN0m6kwAL3gjzlj8zXhWNAiw4WO6hmjnMcRUxVKLwYgw9IC1K8hZEbYefYtt656SqucbRHJBwoWWzVK8DDtPXpOi4zQ/rPVXfTFQnYV3rBAETym9OOJzesdItLXpEfQ+qV1/bBHgjh72oauP1Zt2c83g6U/pmtHy2kfvmZ3B0fUtQRBdOsahEZM6tvGR/8Di+cV4q/mnxQU2Vfo9vgTrQ9VVrNNjrt4yEe34KN9qmo0VRlyiD5mw7NoheI5m+ICutygFEGcEo6YMUtKdk9Xlu62/YLNu31xJ1Wn5+obljg/vHzas2s3CJlekmiV+6pO43iuVQtq4PSFMsFTYeKyNTSMGugYxSQMPJWCI4NpD7BP+XmkNEaD0IjPGIW/wjQRbLmKgAwupnuwQOdxNzMvHH4k3w4H80i7XhoO6wIEnJn4EmjqR2fLCNJ2Z0Z2hARwcmmcS8adGiH7WAPZfjJ1o6V9CFXYghv8AMDryOQ65l4iYBt1Q0a7ej0HbOVFoxEiGG1ejKeMfwyg4thcn85bZQzAnQC2SBV8U4ZLspAZi8Cdfkx7rs90rGoEVepRI="
+
+before_install:
+  - 'pip install awscli'
+
+install:
+  - 'make install'
+
+script:
+  - 'make test'
+
+after_success:
+  - './env/bin/coveralls'
+
+before_deploy:
+  - 'make lambda'
+
+deploy:
+  - provider: 'script'
+    script: '
+      aws lambda
+        update-function-code
+        --function-name "tidycat-notification-backend-staging"
+        --zip-file fileb://lambda.zip
+        --publish'
+    skip_cleanup: true
+    on:
+      repo: 'tidycat/notification-backend'
+      branch: 'master'
+  - provider: 'script'
+    script: '
+      aws lambda
+        update-function-code
+        --function-name "tidycat-notification-backend"
+        --zip-file fileb://lambda.zip
+        --publish'
+    skip_cleanup: true
+    on:
+      repo: 'tidycat/notification-backend'
+      tags: true
+  - provider: 'releases'
+    api_key:
+      secure: "nCxp2Mhe2W0IQ+LGhfe+xTtcCoGDIxZSI6WZVmtz/4VriRdNQJnIf3GUSJ6fbmW3OfuGTClPx+9BrCIWej1GWotJlFuqfPT6M3xIlhy7LuHWNQEcVPhnAFkdx5ex4tqNEjYz5+viv5oaZDs9pJ0SVoMh4DffSu2l/yZyZzvISd/wdki5Ldbt/bK4eUKbWnO6/tAMhJzP1mibVxCb65QDF44JuNRnLi1BsopExTUgB/Mox+BNJFw/GXMO60gy/5MDLRDdpqAiP1P5Z7kwD1xtOUBJHB9QSuyWukNnusDvA6zmOcIHoHuzqFOs1MvcTjoSZkzBfMZCM2ZE0J/GERL1kj0jN/ZFCkxyjMX2lNyaQWapg4ummKr7sUeXX5yx/uXrzAwbAsJ/o/xNQ0hPkaBKZoTUr5xhIL1MfPLSp2hRorFcDyMI5mOdyR8+V2d2pFtg9xyjLaiuMvZVgHgRKUtiIeGK8sIqZYNER8U8r9bmvRb/uqj1Z+yT7++H3sw+2FXmEv8/mtFUhzgFyubCakQwAiFS5Y/yMQxHDRNDVBRg4sXIjx41OCUEt9IfS0ZXQzAzl99RwHlWHPPGOtymV/Ajz80gjakIq7bp4zWueD15xs3Sc6BpY/WlVVEY1gvI+1I7hLSJrjtjX3BtwZbJr4Xe9HeeqTULSgouL7RjBjFYD/o="
+    file: 'lambda.zip'
+    skip_cleanup: true
+    on:
+      repo: 'tidycat/notification-backend'
+      tags: true
+
+notifications:
+  email: false
+  irc:
+    channels:
+      - secure: "bIC92l4YrAkpD5YTE3fpvXLvBCHFKjiWA7KyoSNLaFJuX3dfYyqMRKuF9VBvpwM58Avc3o5vGyRkQopc3I5XzPqS9Fk5JR7vYJqQPdcoD+oYQWclddzNOuYIyHI9LXIcmAK1H6zVVXCCaX9pyHgzODGAhsnoSHpQNBCE+Q2Ae3oe5MrBVlmmi1sbITSx1AvxEz2+uZy6v3KJnB4cqhfDTIy4vDx5k/gzPgE9irgFq42Q2D5G4QsKEATcW5NoSNIfl9R/rdlZBbz9MdLpmzLzg0VXYZiZMb2K/T8Ia0QJbhQ7P6+SL3j5Auc4SHcLRV2nHzGXwBw0S6+2rdV/RsjG7uEDwDumil/A4n27GUPOa+ct+qweKXFnEJ2iHiRzbN8K94G29T2uT5+RA304mqS6mbkYR8Juu//3XDbJ15i+acUc8/RxbZfCQIVW0hDRNvVpJtLZUYMcEmoyVfobaL/vgspyRyWgxD7TPMumaWFO+8HyOalCzzY1AWyfF/oq7v7hSZv/wTX/YJjosExqpUHeTjENOo5/TKPO0eJsfg+BjHYlRn1KpTlTkqbIpoKr8d+Rwf14YQuz7jcFngLM4QSalv34YRiYT61txFTpMgTs6WRkVEseRy0JaMcvEqRyuQc57AYZZei63Z//GxCrrflbjPa9PioUHM8fvJgTseQV2bU="
+    on_success: "change"
+    on_failure: "change"
