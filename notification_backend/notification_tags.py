@@ -1,5 +1,7 @@
 import logging
 from boto3.exceptions import Boto3Error
+from botocore.exceptions import ClientError
+from botocore.exceptions import BotoCoreError
 from boto3.dynamodb.conditions import Key
 from notification_backend.http import format_response
 from notification_backend.http import validate_jwt
@@ -55,8 +57,9 @@ class NotificationTags(object):
                     }
                 }
                 tag_list.append(res)
-        except Boto3Error:
+        except (Boto3Error, BotoCoreError, ClientError) as e:
             error_msg = "Error querying the datastore"
+            logger.error("%s: %s" % (error_msg, str(e)))
             return format_response(500, format_error_payload(500, error_msg))
 
         payload = {
