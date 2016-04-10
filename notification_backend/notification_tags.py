@@ -19,26 +19,32 @@ class NotificationTags(object):
                      "notification_dynamodb_endpoint_url",
                      "notification_tags_dynamodb_table_name"]:
             setattr(self, prop, lambda_event.get(prop))
+            self.token = None
+            self.userid = None
 
-    def find_all_tags(self):
-        token = validate_jwt(self.bearer_token, self.jwt_signing_secret)
-        if not token:
+    def process_tag_event(self, method_name):
+        self.token = validate_jwt(self.bearer_token, self.jwt_signing_secret)
+        if not self.token:
             error_msg = "Invalid JSON Web Token"
             logger.info(error_msg)
             return format_response(401, format_error_payload(401, error_msg))
 
-        userid = token.get('sub')
-        if not userid:
+        self.userid = self.token.get('sub')
+        if not self.userid:
             error_msg = "sub field not present in JWT"
             logger.info(error_msg)
             return format_response(401, format_error_payload(401, error_msg))
 
+        method_to_call = getattr(self, method_name)
+        return method_to_call()
+
+    def find_all_tags(self):
         tag_list = []
         try:
             results = dynamodb_results(
                 self.notification_dynamodb_endpoint_url,
                 self.notification_tags_dynamodb_table_name,
-                Key('user_id').eq(userid)
+                Key('user_id').eq(self.userid)
             )
             for result in results:
                 res = {

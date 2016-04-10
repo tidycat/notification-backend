@@ -19,7 +19,7 @@ def handler(event, context):
     if http_method == "GET" and resource_path == "/tags":
         logger.debug("Getting a list of all tags")
         tags = NotificationTags(event)
-        return tags.find_all_tags()
+        return tags.process_tag_event("find_all_tags")
 
     elif http_method == "GET" and tag_name_path:
         logger.debug("Getting info about tag: %s" % tag_name_path.group(1))
