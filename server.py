@@ -75,7 +75,8 @@ class LocalNotificationBackend(BaseHTTPServer.BaseHTTPRequestHandler):
 
 
 def handle_request(payload, headers, resource_path, http_method):
-    token_header = re.match('^Bearer (.+)', headers.get("Authorization"))
+    token_header = re.match('^Bearer (.+)',
+                            headers.get("Authorization", "Bearer faketoken"))
     event = {
         "resource-path": resource_path,
         "payload": payload,
