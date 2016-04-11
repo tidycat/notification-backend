@@ -1,4 +1,5 @@
 import unittest
+import logging
 from mock import patch
 from notification_backend.entrypoint import handler
 import json
@@ -10,6 +11,11 @@ class TestEntrypoint(unittest.TestCase):
         patcher1 = patch('notification_backend.entrypoint.NotificationTags')
         self.addCleanup(patcher1.stop)
         self.mock_notif_tags = patcher1.start()
+
+    def test_log_level_warning(self):
+        logger = logging.getLogger("notification_backend")
+        self.assertTrue(logger.getEffectiveLevel() >= logging.INFO,
+                        "Log level needs to be set to INFO or better")
 
     def test_invalid_path(self):
         with self.assertRaises(TypeError) as cm:

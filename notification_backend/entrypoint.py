@@ -7,7 +7,7 @@ from notification_backend.http import format_error_payload
 __version__ = "0.0.1"
 logging.basicConfig()
 logger = logging.getLogger("notification_backend")
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 
 
 def handler(event, context):
