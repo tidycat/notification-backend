@@ -31,7 +31,8 @@ def handler(event, context):
 
     elif http_method == "POST" and resource_path == "/tags":
         logger.debug("Creating a new tag")
-        return format_response(200, {"data": []})
+        tags = NotificationTags(event)
+        return tags.process_tag_event("create_new_tag")
 
     elif http_method == "DELETE" and tag_name_path:
         logger.debug("Deleting tag: %s" % tag_name_path.group(1))

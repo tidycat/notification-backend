@@ -39,9 +39,9 @@ def validate_jwt(token, secret):
 def dynamodb_results(endpoint_url, table_name, key):
     exclusive_start_key = None
     more_results = True
+    dynamodb = boto3.resource('dynamodb', endpoint_url=endpoint_url)
+    table = dynamodb.Table(table_name)
     while more_results:
-        dynamodb = boto3.resource('dynamodb', endpoint_url=endpoint_url)
-        table = dynamodb.Table(table_name)
         kwargs = {"KeyConditionExpression": key}
         if exclusive_start_key:
             kwargs.append({"ExclusiveStartKey": exclusive_start_key})
@@ -50,3 +50,9 @@ def dynamodb_results(endpoint_url, table_name, key):
             yield item
         more_results = 'LastEvaluatedKey' in results
         exclusive_start_key = results.get('LastEvaluatedKey')
+
+
+def dynamodb_new_item(endpoint_url, table_name, item, condition_expression):
+    dynamodb = boto3.resource('dynamodb', endpoint_url=endpoint_url)
+    table = dynamodb.Table(table_name)
+    table.put_item(Item=item, ConditionExpression=condition_expression)

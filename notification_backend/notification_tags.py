@@ -2,11 +2,12 @@ import logging
 from boto3.exceptions import Boto3Error
 from botocore.exceptions import ClientError
 from botocore.exceptions import BotoCoreError
-from boto3.dynamodb.conditions import Key
+from boto3.dynamodb.conditions import Key, Attr
 from notification_backend.http import format_response
 from notification_backend.http import validate_jwt
 from notification_backend.http import format_error_payload
 from notification_backend.http import dynamodb_results
+from notification_backend.http import dynamodb_new_item
 
 
 logger = logging.getLogger("notification_backend")
@@ -66,3 +67,61 @@ class NotificationTags(object):
             "data": tag_list
         }
         return format_response(200, payload)
+
+    def create_new_tag(self):
+        post_payload = self.payload.get('data')
+
+        # The POST payload needs to have the 'type' member
+        post_type = post_payload.get('type')
+        if not post_type:
+            error_msg = "Payload missing 'type' member"
+            logger.info(error_msg)
+            return format_response(400, format_error_payload(400, error_msg))
+
+        # The POST payload needs to have the 'id' member
+        tag_id = post_payload.get('id')
+        if not tag_id:
+            error_msg = "Payload missing 'id' member"
+            logger.info(error_msg)
+            return format_response(400, format_error_payload(400, error_msg))
+
+        # If no color is specified, default it to #ffffff
+        tag_color = post_payload.get('attributes', {}).get('color', '#ffffff')
+
+        # Create the specified tag, if it doesn't already exist
+        try:
+            item = {
+                "user_id": self.userid,
+                "tag_name": tag_id,
+                "tag_color": tag_color
+            }
+            dynamodb_new_item(
+                self.notification_dynamodb_endpoint_url,
+                self.notification_tags_dynamodb_table_name,
+                item,
+                Attr("user_id").ne(self.userid) & Attr("tag_name").ne(tag_id)
+            )
+        except ClientError as e:
+            if e.response['Error']['Code'] == "ConditionalCheckFailedException":  # NOQA
+                error_msg = "Tag %s already exists" % tag_id
+                logger.info(error_msg)
+                return format_response(409,
+                                       format_error_payload(409, error_msg))
+            error_msg = "Error querying the datastore"
+            logger.error("%s: %s" % (error_msg, str(e)))
+            return format_response(500, format_error_payload(500, error_msg))
+        except (Boto3Error, BotoCoreError) as e:
+            error_msg = "Error querying the datastore"
+            logger.error("%s: %s" % (error_msg, str(e)))
+            return format_response(500, format_error_payload(500, error_msg))
+
+        payload = {
+            "data": {
+                "type": "tags",
+                "id": tag_id,
+                "attributes": {
+                    "color": tag_color
+                }
+            }
+        }
+        return format_response(201, payload)
