@@ -1,6 +1,7 @@
 import unittest
 import logging
 from mock import patch
+from mock import call
 from notification_backend.entrypoint import handler
 import json
 
@@ -37,3 +38,13 @@ class TestEntrypoint(unittest.TestCase):
         self.assertEqual(result.get('http_status'), 200)
         self.assertTrue("version" in result.get('data').get('meta'))
         self.assertEqual(len(self.mock_notif_tags.mock_calls), 0)
+
+    def test_get_all_tags_endpoint(self):
+        event = {
+            "resource-path": "/notification/tags",
+            "http-method": "GET"
+        }
+        handler(event, {})
+        self.assertTrue(call({'resource-path': '/notification/tags', 'http-method': 'GET'}) in self.mock_notif_tags.mock_calls)  # NOQA
+        self.assertTrue(call().process_tag_event('find_all_tags') in self.mock_notif_tags.mock_calls)  # NOQA
+        self.assertEqual(len(self.mock_notif_tags.mock_calls), 2)
