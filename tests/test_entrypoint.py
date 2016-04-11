@@ -48,3 +48,13 @@ class TestEntrypoint(unittest.TestCase):
         self.assertTrue(call({'resource-path': '/notification/tags', 'http-method': 'GET'}) in self.mock_notif_tags.mock_calls)  # NOQA
         self.assertTrue(call().process_tag_event('find_all_tags') in self.mock_notif_tags.mock_calls)  # NOQA
         self.assertEqual(len(self.mock_notif_tags.mock_calls), 2)
+
+    def test_create_new_tag_endpoint(self):
+        event = {
+            "resource-path": "/notification/tags",
+            "http-method": "POST"
+        }
+        handler(event, {})
+        self.assertTrue(call({'resource-path': '/notification/tags', 'http-method': 'POST'}) in self.mock_notif_tags.mock_calls)  # NOQA
+        self.assertTrue(call().process_tag_event('create_new_tag') in self.mock_notif_tags.mock_calls)  # NOQA
+        self.assertEqual(len(self.mock_notif_tags.mock_calls), 2)

@@ -73,7 +73,7 @@ class NotificationTags(object):
 
         # The POST payload needs to have the 'type' member
         post_type = post_payload.get('type')
-        if not post_type:
+        if post_type != "tags":
             error_msg = "Payload missing 'type' member"
             logger.info(error_msg)
             return format_response(400, format_error_payload(400, error_msg))
