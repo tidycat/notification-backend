@@ -58,3 +58,33 @@ class TestEntrypoint(unittest.TestCase):
         self.assertTrue(call({'resource-path': '/notification/tags', 'http-method': 'POST'}) in self.mock_notif_tags.mock_calls)  # NOQA
         self.assertTrue(call().process_tag_event('create_new_tag') in self.mock_notif_tags.mock_calls)  # NOQA
         self.assertEqual(len(self.mock_notif_tags.mock_calls), 2)
+
+    def test_delete_tag_endpoint(self):
+        event = {
+            "resource-path": "/notification/tags/faketag",
+            "http-method": "DELETE"
+        }
+        handler(event, {})
+        self.assertTrue(call({'resource-path': '/notification/tags/faketag', 'http-method': 'DELETE'}) in self.mock_notif_tags.mock_calls)  # NOQA
+        self.assertTrue(call().process_tag_event('delete_tag') in self.mock_notif_tags.mock_calls)  # NOQA
+        self.assertEqual(len(self.mock_notif_tags.mock_calls), 2)
+
+    def test_find_tag_endpoint(self):
+        event = {
+            "resource-path": "/notification/tags/faketag",
+            "http-method": "GET"
+        }
+        handler(event, {})
+        self.assertTrue(call({'resource-path': '/notification/tags/faketag', 'http-method': 'GET'}) in self.mock_notif_tags.mock_calls)  # NOQA
+        self.assertTrue(call().process_tag_event('find_tag') in self.mock_notif_tags.mock_calls)  # NOQA
+        self.assertEqual(len(self.mock_notif_tags.mock_calls), 2)
+
+    def test_update_tag_endpoint(self):
+        event = {
+            "resource-path": "/notification/tags/faketag",
+            "http-method": "PATCH"
+        }
+        handler(event, {})
+        self.assertTrue(call({'resource-path': '/notification/tags/faketag', 'http-method': 'PATCH'}) in self.mock_notif_tags.mock_calls)  # NOQA
+        self.assertTrue(call().process_tag_event('update_tag') in self.mock_notif_tags.mock_calls)  # NOQA
+        self.assertEqual(len(self.mock_notif_tags.mock_calls), 2)
