@@ -1,4 +1,5 @@
 import logging
+import re
 from boto3.exceptions import Boto3Error
 from botocore.exceptions import ClientError
 from botocore.exceptions import BotoCoreError
@@ -8,6 +9,7 @@ from notification_backend.http import validate_jwt
 from notification_backend.http import format_error_payload
 from notification_backend.http import dynamodb_results
 from notification_backend.http import dynamodb_new_item
+from notification_backend.http import dynamodb_delete_item
 
 
 logger = logging.getLogger("notification_backend")
@@ -24,6 +26,9 @@ class NotificationTags(object):
             setattr(self, prop, lambda_event.get(prop))
             self.token = None
             self.userid = None
+            resource_path = lambda_event.get('resource-path', "")
+            self.tag_name_path = re.match('^/notification/tags/(.+)',
+                                          resource_path)
 
     def process_tag_event(self, method_name):
         self.token = validate_jwt(self.bearer_token, self.jwt_signing_secret)
@@ -125,3 +130,37 @@ class NotificationTags(object):
             }
         }
         return format_response(201, payload)
+
+    def delete_tag(self):
+        tag_name = self.tag_name_path.group(1)
+        key = {
+            "user_id": self.userid,
+            "tag_name": tag_name
+        }
+        try:
+            dynamodb_delete_item(
+                self.notification_dynamodb_endpoint_url,
+                self.notification_tags_dynamodb_table_name,
+                key,
+                Attr("user_id").eq(self.userid) & Attr("tag_name").eq(tag_name)
+            )
+        except ClientError as e:
+            if e.response['Error']['Code'] == "ConditionalCheckFailedException":  # NOQA
+                error_msg = "Tag %s does not exist" % tag_name
+                logger.info(error_msg)
+                return format_response(409,
+                                       format_error_payload(409, error_msg))
+            error_msg = "Error deleting tag %s from the datastore" % tag_name
+            logger.error("%s: %s" % (error_msg, str(e)))
+            return format_response(500, format_error_payload(500, error_msg))
+        except (Boto3Error, BotoCoreError) as e:
+            error_msg = "Error deleting tag %s from the datastore" % tag_name
+            logger.error("%s: %s" % (error_msg, str(e)))
+            return format_response(500, format_error_payload(500, error_msg))
+
+        payload = {
+            "meta": {
+                "message": "Tag %s successfully deleted" % tag_name
+            }
+        }
+        return format_response(200, payload)

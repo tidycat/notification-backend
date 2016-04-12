@@ -58,3 +58,12 @@ def dynamodb_new_item(endpoint_url,
     dynamodb = boto3.resource('dynamodb', endpoint_url=endpoint_url)
     table = dynamodb.Table(table_name)
     table.put_item(Item=item, ConditionExpression=condition_expression)
+
+
+def dynamodb_delete_item(endpoint_url,
+                         table_name,
+                         key,
+                         condition_expression):
+    dynamodb = boto3.resource('dynamodb', endpoint_url=endpoint_url)
+    table = dynamodb.Table(table_name)
+    table.delete_item(Key=key, ConditionExpression=condition_expression)
