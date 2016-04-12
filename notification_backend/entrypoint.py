@@ -28,7 +28,8 @@ def handler(event, context):
 
     elif http_method == "PATCH" and tag_name_path:
         logger.debug("Updating tag: %s" % tag_name_path.group(1))
-        return format_response(200, {"data": []})
+        tags = NotificationTags(event)
+        return tags.process_tag_event("update_tag")
 
     elif http_method == "POST" and resource_path == "/notification/tags":
         logger.debug("Creating a new tag")
