@@ -10,6 +10,7 @@ from notification_backend.http import format_error_payload
 from notification_backend.http import dynamodb_results
 from notification_backend.http import dynamodb_new_item
 from notification_backend.http import dynamodb_delete_item
+from notification_backend.http import dynamodb_get_item
 
 
 logger = logging.getLogger("notification_backend")
@@ -161,6 +162,40 @@ class NotificationTags(object):
         payload = {
             "meta": {
                 "message": "Tag %s successfully deleted" % tag_name
+            }
+        }
+        return format_response(200, payload)
+
+    def find_tag(self):
+        tag_name = self.tag_name_path.group(1)
+        key = {
+            "user_id": self.userid,
+            "tag_name": tag_name
+        }
+        result = {}
+        try:
+            result = dynamodb_get_item(
+                self.notification_dynamodb_endpoint_url,
+                self.notification_tags_dynamodb_table_name,
+                key
+            )
+        except (Boto3Error, BotoCoreError, ClientError) as e:
+            error_msg = "Error getting tag %s from the datastore" % tag_name
+            logger.error("%s: %s" % (error_msg, str(e)))
+            return format_response(500, format_error_payload(500, error_msg))
+
+        if not result:
+            error_msg = "Could not find information for tag %s" % tag_name
+            logger.info(error_msg)
+            return format_response(404, format_error_payload(404, error_msg))
+
+        payload = {
+            "data": {
+                "type": "tags",
+                "id": tag_name,
+                "attributes": {
+                    "color": result.get('tag_color')
+                }
             }
         }
         return format_response(200, payload)
