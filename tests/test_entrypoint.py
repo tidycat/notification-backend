@@ -13,6 +13,10 @@ class TestEntrypoint(unittest.TestCase):
         self.addCleanup(patcher1.stop)
         self.mock_notif_tags = patcher1.start()
 
+        patcher2 = patch('notification_backend.entrypoint.NotificationThreads')
+        self.addCleanup(patcher2.stop)
+        self.mock_notif_threads = patcher2.start()
+
     def test_log_level_warning(self):
         logger = logging.getLogger("notification_backend")
         self.assertTrue(logger.getEffectiveLevel() >= logging.INFO,
@@ -88,3 +92,13 @@ class TestEntrypoint(unittest.TestCase):
         self.assertTrue(call({'resource-path': '/notification/tags/faketag', 'http-method': 'PATCH'}) in self.mock_notif_tags.mock_calls)  # NOQA
         self.assertTrue(call().process_tag_event('update_tag') in self.mock_notif_tags.mock_calls)  # NOQA
         self.assertEqual(len(self.mock_notif_tags.mock_calls), 2)
+
+    def test_find_thread_endpoint(self):
+        event = {
+            "resource-path": "/notification/threads/12345",
+            "http-method": "GET"
+        }
+        handler(event, {})
+        self.assertTrue(call({'resource-path': '/notification/threads/12345', 'http-method': 'GET'}) in self.mock_notif_threads.mock_calls)  # NOQA
+        self.assertTrue(call().process_thread_event('find_thread') in self.mock_notif_threads.mock_calls)  # NOQA
+        self.assertEqual(len(self.mock_notif_threads.mock_calls), 2)

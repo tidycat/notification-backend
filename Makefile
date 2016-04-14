@@ -107,12 +107,12 @@ init-local-dynamodb:  ## Initialize the local instance of DynamoDB
 		--attribute-definitions \
 			AttributeName=user_id,AttributeType=N \
 			AttributeName=thread_id,AttributeType=N \
-			AttributeName=notification_date,AttributeType=N \
+			AttributeName=updated_at,AttributeType=N \
 		--key-schema \
 			AttributeName=user_id,KeyType=HASH \
 			AttributeName=thread_id,KeyType=RANGE \
 		--local-secondary-indexes \
-			"IndexName=user-notification-date,KeySchema=[{AttributeName=user_id,KeyType=HASH},{AttributeName=notification_date,KeyType=RANGE}],Projection={ProjectionType=ALL}" \
+			"IndexName=user-notification-date,KeySchema=[{AttributeName=user_id,KeyType=HASH},{AttributeName=updated_at,KeyType=RANGE}],Projection={ProjectionType=ALL}" \
 		--provisioned-throughput ReadCapacityUnits=1,WriteCapacityUnits=1
 	aws dynamodb create-table \
 		--endpoint-url http://localhost:8000 \
