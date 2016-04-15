@@ -1,7 +1,9 @@
 import logging
 import re
 import requests
+import urlparse
 import dateutil.parser as dp
+import time
 from boto3.exceptions import Boto3Error
 from botocore.exceptions import ClientError
 from botocore.exceptions import BotoCoreError
@@ -14,6 +16,8 @@ from notification_backend.http import dynamodb_new_item
 
 
 logger = logging.getLogger("notification_backend")
+BACKLOG_TIME_LIMIT = 2592000 * 6  # 6 months, in seconds
+DEFAULT_BACKLOG_SEARCH_TIME = 604800  # 1 week, in seconds
 
 
 class NotificationThreads(object):
@@ -23,13 +27,14 @@ class NotificationThreads(object):
                      "jwt_signing_secret",
                      "bearer_token",
                      "notification_dynamodb_endpoint_url",
-                     "notification_user_notification_dynamodb_table_name"]:
+                     "notification_user_notification_dynamodb_table_name",
+                     "notification_user_notification_date_dynamodb_index_name"]:  # NOQA
             setattr(self, prop, lambda_event.get(prop))
             self.token = None
             self.userid = None
-            resource_path = lambda_event.get('resource-path', "")
+            self.resource_path = lambda_event.get('resource-path', "")
             self.thread_id_path = re.match('^/notification/threads/(.+)',
-                                           resource_path)
+                                           self.resource_path)
 
     def process_thread_event(self, method_name):
         self.token = validate_jwt(self.bearer_token, self.jwt_signing_secret)
@@ -167,3 +172,60 @@ class NotificationThreads(object):
             error_msg = "Error writing info for thread %s to the datastore" % result.get('thread_id')  # NOQA
             logger.error("%s: %s" % (error_msg, str(e)))
             return format_response(500, format_error_payload(500, error_msg))
+
+    def find_all_threads(self):
+        current_epoch_time = int(time.time())
+        params = urlparse.parse_qs(urlparse.urlparse(self.resource_path).query)
+        self.from_date = params.get('from')
+        if self.from_date:
+            # urlparse.parse_qs returns a list of values corresponding to the
+            # specified key, we only effectively care about the first value
+            self.from_date = self.from_date[0]
+        else:
+            self.from_date = current_epoch_time - DEFAULT_BACKLOG_SEARCH_TIME
+
+        try:
+            self.from_date = int(self.from_date)
+        except ValueError as e:
+            error_msg = "'from' parameter needs to be in epoch seconds, %s is not valid" % self.from_date  # NOQA
+            logger.info("%s: %s" % (error_msg, str(e)))
+            return format_response(400, format_error_payload(400, error_msg))
+
+        if self.from_date <= (current_epoch_time - BACKLOG_TIME_LIMIT):
+            self.from_date = current_epoch_time - BACKLOG_TIME_LIMIT
+
+        thread_list = []
+        try:
+            results = dynamodb_results(
+                self.notification_dynamodb_endpoint_url,
+                self.notification_user_notification_dynamodb_table_name,
+                Key('user_id').eq(self.userid) & Key('updated_at').gte(self.from_date),  # NOQA
+                self.notification_user_notification_date_dynamodb_index_name
+            )
+            for result in results:
+                res = {
+                    "type": "threads",
+                    "id": int(result.get('thread_id')),
+                    "attributes": {
+                        "thread_url": result.get('thread_url'),
+                        "thread_subscription_url": result.get('thread_subscription_url'),  # NOQA
+                        "reason": result.get('reason'),
+                        "updated_at": int(result.get('updated_at')),
+                        "subject_title": result.get('subject_title'),
+                        "subject_url": result.get('subject_url'),
+                        "subject_type": result.get('subject_type'),
+                        "repository_owner": result.get('repository_owner'),
+                        "repository_name": result.get('repository_name'),
+                        "tags": result.get('tags')
+                    }
+                }
+                thread_list.append(res)
+        except (Boto3Error, BotoCoreError, ClientError) as e:
+            error_msg = "Error querying the datastore"
+            logger.error("%s: %s" % (error_msg, str(e)))
+            return format_response(500, format_error_payload(500, error_msg))
+
+        payload = {
+            "data": thread_list
+        }
+        return format_response(200, payload)
