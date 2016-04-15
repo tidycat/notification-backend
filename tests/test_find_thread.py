@@ -214,7 +214,7 @@ class TestFindThread(unittest.TestCase):
         output = {
           "id": "12345678",
           "reason": "manual",
-          "updated_at": "2016-04-12T01:40:17",
+          "updated_at": "2016-04-12T01:40:17Z",
           "subject": {
             "title": "Support AWS APIGateway",
             "url": "https://api.github.com/repos/hashicorp/terraform/issues/3675",  # NOQA
@@ -249,7 +249,7 @@ class TestFindThread(unittest.TestCase):
         self.assertEqual(result_attrs.get('thread_url'), "https://api.github.com/notifications/threads/12345678")  # NOQA
         self.assertEqual(result_attrs.get('thread_subscription_url'), "https://api.github.com/notifications/threads/12345678/subscription")  # NOQA
         self.assertEqual(result_attrs.get('reason'), "manual")
-        self.assertEqual(result_attrs.get('updated_at'), 1460439617)
+        self.assertEqual(result_attrs.get('updated_at'), 1460425217)
         self.assertEqual(result_attrs.get('subject_title'), "Support AWS APIGateway")  # NOQA
         self.assertEqual(result_attrs.get('subject_url'), "https://api.github.com/repos/hashicorp/terraform/issues/3675")  # NOQA
         self.assertEqual(result_attrs.get('subject_type'), "Issue")

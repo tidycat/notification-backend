@@ -2,8 +2,6 @@ import logging
 import re
 import requests
 import urlparse
-import dateutil.parser as dp
-import time
 from boto3.exceptions import Boto3Error
 from botocore.exceptions import ClientError
 from botocore.exceptions import BotoCoreError
@@ -13,6 +11,8 @@ from notification_backend.http import validate_jwt
 from notification_backend.http import format_error_payload
 from notification_backend.http import dynamodb_results
 from notification_backend.http import dynamodb_new_item
+from notification_backend.time import get_epoch_time
+from notification_backend.time import get_current_epoch_time
 
 
 logger = logging.getLogger("notification_backend")
@@ -126,13 +126,13 @@ class NotificationThreads(object):
             logger.error("Could not parse JSON from response %s. Error: %s" % (r.text, str(e)))  # NOQA
             return None
 
-        update_at_epoch_time = dp.parse(thread_json.get('updated_at')).strftime('%s')  # NOQA
+        updated_at = get_epoch_time(thread_json.get('updated_at'))
         return {
             "thread_id": int(thread_id),
             "thread_url": thread_json.get('url'),
             "thread_subscription_url": thread_json.get('subscription_url'),
             "reason": thread_json.get('reason'),
-            "updated_at": int(update_at_epoch_time),
+            "updated_at": updated_at,
             "subject_title": thread_json.get('subject', {}).get('title'),
             "subject_url": thread_json.get('subject', {}).get('url'),
             "subject_type": thread_json.get('subject', {}).get('type'),
@@ -174,7 +174,7 @@ class NotificationThreads(object):
             return format_response(500, format_error_payload(500, error_msg))
 
     def find_all_threads(self):
-        current_epoch_time = int(time.time())
+        current_epoch_time = get_current_epoch_time()
         params = urlparse.parse_qs(urlparse.urlparse(self.resource_path).query)
         self.from_date = params.get('from')
         if self.from_date:

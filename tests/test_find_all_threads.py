@@ -15,7 +15,7 @@ class TestFindAllThreads(unittest.TestCase):
         self.addCleanup(patcher1.stop)
         self.mock_db_results = patcher1.start()
 
-        patcher2 = patch('notification_backend.notification_threads.time.time')  # NOQA
+        patcher2 = patch('notification_backend.notification_threads.get_current_epoch_time')  # NOQA
         self.addCleanup(patcher2.stop)
         self.mock_time = patcher2.start()
         self.mock_time.return_value = time.mktime(datetime(2016, 1, 10).timetuple())  # NOQA
