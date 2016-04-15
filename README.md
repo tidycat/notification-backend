@@ -33,10 +33,10 @@ This AWS Lambda notification backend will handle the notification and tag portio
 
 | Endpoint | HTTP Verb | Task |
 | -------- | --------- | ---- |
-| `/notification/threads` | `GET`     | Optionally with the `fromDate` parameter (e.g.  `fromDate=2016-04-08T13:03:43+00:00`). Return a list of all relevant notifications starting from `fromDate`. Defaults to one week in the past. |
-| `/notification/threads/1234` | `GET`     | Return all the information relevant to notification id `1234`. |
-| `/notification/threads/1234` | `PATCH`   | Update the information pertinent to notification id `1234`. |
-| `/notification/threads/1234` | `DELETE`  | Delete notification id `1234`. |
+| `/notification/threads` | `GET` | Optionally with the `fromDate` parameter (e.g.  `fromDate=2016-04-08T13:03:43+00:00`). Return a list of all relevant notifications starting from `fromDate`. Defaults to one week in the past. |
+| `/notification/threads/1234` | `GET` | Return all the information relevant to notification id `1234`. |
+| `/notification/threads/1234` | `PATCH` | Update the information pertinent to notification id `1234`. |
+| `/notification/threads/1234` | `DELETE` | Delete notification id `1234`. |
 | `/notification/threads/refresh` | `POST` | Populate the user's notifications for the last `n` months. |
 | `/notification/tags` | `GET` | Return a list of all the user-created tags. |
 | `/notification/tags/name` | `GET` | Return all the information relevant to tag `name`. |
