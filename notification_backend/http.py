@@ -36,15 +36,17 @@ def validate_jwt(token, secret):
         return None
 
 
-def dynamodb_results(endpoint_url, table_name, key):
+def dynamodb_results(endpoint_url, table_name, key, index_name=None):
     exclusive_start_key = None
     more_results = True
     dynamodb = boto3.resource('dynamodb', endpoint_url=endpoint_url)
     table = dynamodb.Table(table_name)
     while more_results:
         kwargs = {"KeyConditionExpression": key}
+        if index_name:
+            kwargs.update({"IndexName": index_name})
         if exclusive_start_key:
-            kwargs.append({"ExclusiveStartKey": exclusive_start_key})
+            kwargs.update({"ExclusiveStartKey": exclusive_start_key})
         results = table.query(**kwargs)
         for item in results['Items']:
             yield item
@@ -53,11 +55,15 @@ def dynamodb_results(endpoint_url, table_name, key):
 
 
 def dynamodb_new_item(endpoint_url,
-                      table_name, item,
-                      condition_expression):
+                      table_name,
+                      item,
+                      condition_expression=None):
     dynamodb = boto3.resource('dynamodb', endpoint_url=endpoint_url)
     table = dynamodb.Table(table_name)
-    table.put_item(Item=item, ConditionExpression=condition_expression)
+    kwargs = {"Item": item}
+    if condition_expression:
+        kwargs.update({"ConditionExpression": condition_expression})
+    table.put_item(**kwargs)
 
 
 def dynamodb_delete_item(endpoint_url,
