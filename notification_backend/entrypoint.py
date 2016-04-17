@@ -56,6 +56,11 @@ def handler(event, context):
         t = NotificationThreads(event)
         return t.process_thread_event("find_all_threads")
 
+    elif http_method == "PATCH" and thread_id_path:
+        logger.debug("Updating thread: %s" % thread_id_path.group(1))
+        t = NotificationThreads(event)
+        return t.process_thread_event("update_thread")
+
     elif http_method == "GET" and resource_path == "/notification/ping":
         payload = {
             "data": [],

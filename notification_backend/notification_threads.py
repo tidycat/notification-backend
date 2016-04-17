@@ -11,6 +11,7 @@ from notification_backend.http import validate_jwt
 from notification_backend.http import format_error_payload
 from notification_backend.http import dynamodb_results
 from notification_backend.http import dynamodb_new_item
+from notification_backend.http import dynamodb_update_item
 from notification_backend.time import get_epoch_time
 from notification_backend.time import get_current_epoch_time
 
@@ -227,5 +228,62 @@ class NotificationThreads(object):
 
         payload = {
             "data": thread_list
+        }
+        return format_response(200, payload)
+
+    def update_thread(self):
+        thread_id = int(self.thread_id_path.group(1))
+        patch_payload = self.payload.get('data', {})
+
+        # The PATCH payload needs to have the 'type' member
+        patch_type = patch_payload.get('type')
+        if patch_type != "threads":
+            error_msg = "Invalid 'type' member, should be 'threads'"
+            logger.info(error_msg)
+            return format_response(400, format_error_payload(400, error_msg))
+
+        # The PATCH payload needs to have the 'id' member
+        m_thread_id = patch_payload.get('id')
+        if m_thread_id != thread_id:
+            error_msg = "Invalid 'id' member, should match patch url"
+            logger.info(error_msg)
+            return format_response(400, format_error_payload(400, error_msg))
+
+        # Gather the attributes that need to be updated
+        updated_at = patch_payload.get('attributes', {}).get('updated_at')
+        subject_title = patch_payload.get('attributes', {}).get('subject_title')  # NOQA
+        reason = patch_payload.get('attributes', {}).get('reason')
+        tags = patch_payload.get('attributes', {}).get('tags', [])
+
+        # The understanding here is that any attribute that isn't explicitly
+        # specified is essentially blanked out (with a falsey value)
+        key = {
+            "user_id": self.userid,
+            "thread_id": thread_id
+        }
+        values = {
+            ":u": updated_at,
+            ":s": subject_title,
+            ":r": reason,
+            ":t": tags
+        }
+        update_expression = "set updated_at=:u, subject_title=:s, reason=:r, tags=:t"  # NOQA
+        try:
+            dynamodb_update_item(
+                endpoint_url=self.notification_dynamodb_endpoint_url,
+                table_name=self.notification_user_notification_dynamodb_table_name,  # NOQA
+                key=key,
+                update_expression=update_expression,
+                expr_attribute_values=values
+            )
+        except (Boto3Error, BotoCoreError, ClientError) as e:
+            error_msg = "Error updating thread %s in the datastore" % thread_id
+            logger.error("%s: %s" % (error_msg, str(e)))
+            return format_response(500, format_error_payload(500, error_msg))
+
+        payload = {
+            "meta": {
+                "message": "Thread %s updated successfully" % thread_id
+            }
         }
         return format_response(200, payload)

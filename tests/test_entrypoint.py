@@ -122,3 +122,13 @@ class TestEntrypoint(unittest.TestCase):
         self.assertTrue(call({'resource-path': '/notification/threads?hello=hi', 'http-method': 'GET'}) in self.mock_notif_threads.mock_calls)  # NOQA
         self.assertTrue(call().process_thread_event('find_all_threads') in self.mock_notif_threads.mock_calls)  # NOQA
         self.assertEqual(len(self.mock_notif_threads.mock_calls), 2)
+
+    def test_update_thread_endpoint_qs(self):
+        event = {
+            "resource-path": "/notification/threads/12345",
+            "http-method": "PATCH"
+        }
+        handler(event, {})
+        self.assertTrue(call({'resource-path': '/notification/threads/12345', 'http-method': 'PATCH'}) in self.mock_notif_threads.mock_calls)  # NOQA
+        self.assertTrue(call().process_thread_event('update_thread') in self.mock_notif_threads.mock_calls)  # NOQA
+        self.assertEqual(len(self.mock_notif_threads.mock_calls), 2)
