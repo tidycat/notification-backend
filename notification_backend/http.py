@@ -92,14 +92,15 @@ def dynamodb_update_item(endpoint_url,
                          key,
                          update_expression,
                          expr_attribute_values,
-                         condition_expression):
+                         condition_expression=None):
     dynamodb = boto3.resource('dynamodb', endpoint_url=endpoint_url)
     table = dynamodb.Table(table_name)
-    result = table.update_item(
-        Key=key,
-        UpdateExpression=update_expression,
-        ExpressionAttributeValues=expr_attribute_values,
-        ConditionExpression=condition_expression,
-        ReturnValues="UPDATED_NEW"
-    )
+    kwargs = {}
+    kwargs.update({"Key": key})
+    kwargs.update({"UpdateExpression": update_expression})
+    kwargs.update({"ExpressionAttributeValues": expr_attribute_values})
+    kwargs.update({"ReturnValues": "UPDATED_NEW"})
+    if condition_expression:
+        kwargs.update({"ConditionExpression": condition_expression})
+    result = table.update_item(**kwargs)
     return result
