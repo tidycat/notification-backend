@@ -23,6 +23,7 @@ def format_response(http_status_code, payload):
         "http_status": http_status_code,
         "data": payload
     }
+    logger.debug("Response: %s" % response)
     if http_status_code == 200:
         return response
     raise TypeError(json.dumps(response))

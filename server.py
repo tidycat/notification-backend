@@ -4,11 +4,13 @@ import time
 import json
 import os
 import re
+import logging
 from notification_backend.entrypoint import handler
 
 
 HOST_NAME = sys.argv[1]
 PORT_NUMBER = int(sys.argv[2])
+logger = logging.getLogger("notification_backend")
 
 
 class LocalNotificationBackend(BaseHTTPServer.BaseHTTPRequestHandler):
@@ -90,8 +92,10 @@ def handle_request(payload, headers, resource_path, http_method):
     }
     try:
         response_payload = handler(event, {})
+        logger.debug("Server Response: %s" % response_payload)
         return transform_response(response_payload)
     except TypeError as e:
+        logger.debug("Server error Response: %s" % str(e))
         return transform_response(json.loads(str(e)))
 
 
