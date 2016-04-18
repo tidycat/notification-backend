@@ -132,3 +132,13 @@ class TestEntrypoint(unittest.TestCase):
         self.assertTrue(call({'resource-path': '/notification/threads/12345', 'http-method': 'PATCH'}) in self.mock_notif_threads.mock_calls)  # NOQA
         self.assertTrue(call().process_thread_event('update_thread') in self.mock_notif_threads.mock_calls)  # NOQA
         self.assertEqual(len(self.mock_notif_threads.mock_calls), 2)
+
+    def test_delete_thread_endpoint(self):
+        event = {
+            "resource-path": "/notification/threads/12345",
+            "http-method": "DELETE"
+        }
+        handler(event, {})
+        self.assertTrue(call({'resource-path': '/notification/threads/12345', 'http-method': 'DELETE'}) in self.mock_notif_threads.mock_calls)  # NOQA
+        self.assertTrue(call().process_thread_event('delete_thread') in self.mock_notif_threads.mock_calls)  # NOQA
+        self.assertEqual(len(self.mock_notif_threads.mock_calls), 2)

@@ -61,6 +61,11 @@ def handler(event, context):
         t = NotificationThreads(event)
         return t.process_thread_event("update_thread")
 
+    elif http_method == "DELETE" and thread_id_path:
+        logger.debug("Deleting thread: %s" % thread_id_path.group(1))
+        t = NotificationThreads(event)
+        return t.process_thread_event("delete_thread")
+
     elif http_method == "GET" and resource_path == "/notification/ping":
         payload = {
             "data": [],
