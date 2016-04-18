@@ -76,18 +76,6 @@ def dynamodb_delete_item(endpoint_url,
     table.delete_item(Key=key, ConditionExpression=condition_expression)
 
 
-def dynamodb_get_item(endpoint_url,
-                      table_name,
-                      key):
-    dynamodb = boto3.resource('dynamodb', endpoint_url=endpoint_url)
-    table = dynamodb.Table(table_name)
-    result = table.get_item(Key=key)
-
-    if 'Item' in result:
-        return result['Item']
-    return None
-
-
 def dynamodb_update_item(endpoint_url,
                          table_name,
                          key,
