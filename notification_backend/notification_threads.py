@@ -5,13 +5,14 @@ import urlparse
 from boto3.exceptions import Boto3Error
 from botocore.exceptions import ClientError
 from botocore.exceptions import BotoCoreError
-from boto3.dynamodb.conditions import Key
+from boto3.dynamodb.conditions import Key, Attr
 from notification_backend.http import format_response
 from notification_backend.http import validate_jwt
 from notification_backend.http import format_error_payload
 from notification_backend.http import dynamodb_results
 from notification_backend.http import dynamodb_new_item
 from notification_backend.http import dynamodb_update_item
+from notification_backend.http import dynamodb_delete_item
 from notification_backend.time import get_epoch_time
 from notification_backend.time import get_current_epoch_time
 
@@ -284,6 +285,40 @@ class NotificationThreads(object):
         payload = {
             "meta": {
                 "message": "Thread %s updated successfully" % thread_id
+            }
+        }
+        return format_response(200, payload)
+
+    def delete_thread(self):
+        thread_id = int(self.thread_id_path.group(1))
+        key = {
+            "user_id": self.userid,
+            "thread_id": thread_id
+        }
+        try:
+            dynamodb_delete_item(
+                endpoint_url=self.notification_dynamodb_endpoint_url,
+                table_name=self.notification_user_notification_dynamodb_table_name,  # NOQA
+                key=key,
+                condition_expression=Attr("user_id").eq(self.userid) & Attr("thread_id").eq(thread_id)  # NOQA
+            )
+        except ClientError as e:
+            if e.response['Error']['Code'] == "ConditionalCheckFailedException":  # NOQA
+                error_msg = "Thread %s does not exist" % thread_id
+                logger.info(error_msg)
+                return format_response(409,
+                                       format_error_payload(409, error_msg))
+            error_msg = "Error deleting thread %s from the datastore" % thread_id  # NOQA
+            logger.error("%s: %s" % (error_msg, str(e)))
+            return format_response(500, format_error_payload(500, error_msg))
+        except (Boto3Error, BotoCoreError) as e:
+            error_msg = "Error deleting thread %s from the datastore" % thread_id  # NOQA
+            logger.error("%s: %s" % (error_msg, str(e)))
+            return format_response(500, format_error_payload(500, error_msg))
+
+        payload = {
+            "meta": {
+                "message": "Thread %s successfully deleted" % thread_id
             }
         }
         return format_response(200, payload)

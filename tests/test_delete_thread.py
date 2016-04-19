@@ -1,38 +1,59 @@
 import unittest
 from mock import patch
-from notification_backend.notification_tags import NotificationTags
+from notification_backend.notification_threads import NotificationThreads
 import json
 import jwt
 from boto3.exceptions import Boto3Error
 from botocore.exceptions import ClientError
 
 
-class TestDeleteTag(unittest.TestCase):
+class TestDeleteThread(unittest.TestCase):
 
     def setUp(self):
-        patcher1 = patch('notification_backend.notification_tags.dynamodb_delete_item')  # NOQA
+        patcher1 = patch('notification_backend.notification_threads.dynamodb_delete_item')  # NOQA
         self.addCleanup(patcher1.stop)
         self.mock_db_delete = patcher1.start()
 
         self.jwt_signing_secret = "shhsekret"
-        self.token = jwt.encode({"sub": "user1"},
+        self.token = jwt.encode({"sub": "1234"},
                                 self.jwt_signing_secret,
                                 algorithm='HS256')
         self.lambda_event = {
             "jwt_signing_secret": self.jwt_signing_secret,
             "bearer_token": self.token,
-            "payload": {},
-            "resource-path": "/notification/tags/wiptag",
+            "resource-path": "/notification/threads/123456",
+            "payload": {
+                "data": {
+                    "id": 123456,
+                    "type": "threads",
+                    "attributes": {
+                        "thread_url": "http://example.com/threadurl",
+                        "thread_subscription_url": "http://example.com/threadsubscriptionurl",  # NOQA
+                        "reason": "subscribed",
+                        "updated_at": 3332333,
+                        "subject_title": "This is a title",
+                        "subject_url": "http://example.com/subjecturl",
+                        "subject_type": "PullRequest",
+                        "repository_owner": "octocat",
+                        "repository_name": "octorepo",
+                        "tags": [
+                            "tag1",
+                            "tag2"
+                        ]
+                    }
+                }
+            },
             "notification_dynamodb_endpoint_url": "http://example.com",
-            "notification_tags_dynamodb_table_name": "faketags"
+            "notification_user_notification_dynamodb_table_name": "faketable",
+            "notification_user_notification_date_dynamodb_index_name": "fakendex"  # NOQA
         }
 
-    def test_tag_does_not_exist(self):
+    def test_thread_does_not_exist(self):
         ce = ClientError({"Error": {"Code": "ConditionalCheckFailedException"}}, "OperationName")  # NOQA
         self.mock_db_delete.side_effect = ce
-        t = NotificationTags(self.lambda_event)
+        t = NotificationThreads(self.lambda_event)
         with self.assertRaises(TypeError) as cm:
-            t.process_tag_event("delete_tag")
+            t.process_thread_event("delete_thread")
         result_json = json.loads(str(cm.exception))
         self.assertEqual(result_json.get('http_status'), 409)
         self.assertEqual(
@@ -41,16 +62,16 @@ class TestDeleteTag(unittest.TestCase):
         )
         self.assertEqual(
             result_json.get('data').get('errors')[0].get('detail'),
-            "Tag wiptag does not exist"
+            "Thread 123456 does not exist"
         )
         self.assertTrue(self.mock_db_delete.mock_calls > 0)
 
     def test_error_querying_datastore_clienterror(self):
-        ce = ClientError({"Error": {"Code": "randomfake"}}, "OperationName")  # NOQA
+        ce = ClientError({"Error": {"Code": "random"}}, "OperationName")  # NOQA
         self.mock_db_delete.side_effect = ce
-        t = NotificationTags(self.lambda_event)
+        t = NotificationThreads(self.lambda_event)
         with self.assertRaises(TypeError) as cm:
-            t.process_tag_event("delete_tag")
+            t.process_thread_event("delete_thread")
         result_json = json.loads(str(cm.exception))
         self.assertEqual(result_json.get('http_status'), 500)
         self.assertEqual(
@@ -59,15 +80,15 @@ class TestDeleteTag(unittest.TestCase):
         )
         self.assertEqual(
             result_json.get('data').get('errors')[0].get('detail'),
-            "Error deleting tag wiptag from the datastore"
+            "Error deleting thread 123456 from the datastore"
         )
         self.assertTrue(self.mock_db_delete.mock_calls > 0)
 
     def test_error_querying_datastore_boto3error(self):
         self.mock_db_delete.side_effect = Boto3Error
-        t = NotificationTags(self.lambda_event)
+        t = NotificationThreads(self.lambda_event)
         with self.assertRaises(TypeError) as cm:
-            t.process_tag_event("delete_tag")
+            t.process_thread_event("delete_thread")
         result_json = json.loads(str(cm.exception))
         self.assertEqual(result_json.get('http_status'), 500)
         self.assertEqual(
@@ -76,14 +97,14 @@ class TestDeleteTag(unittest.TestCase):
         )
         self.assertEqual(
             result_json.get('data').get('errors')[0].get('detail'),
-            "Error deleting tag wiptag from the datastore"
+            "Error deleting thread 123456 from the datastore"
         )
         self.assertTrue(self.mock_db_delete.mock_calls > 0)
 
-    def test_delete_tag(self):
-        t = NotificationTags(self.lambda_event)
-        result_json = t.process_tag_event("delete_tag")
+    def test_delete_thread(self):
+        t = NotificationThreads(self.lambda_event)
+        result_json = t.process_thread_event("delete_thread")
         self.assertEqual(result_json.get('http_status'), 200)
         self.assertEqual(result_json.get('data').get('meta').get('message'),
-                         'Tag wiptag successfully deleted')
+                         'Thread 123456 successfully deleted')
         self.assertTrue(self.mock_db_delete.mock_calls > 0)

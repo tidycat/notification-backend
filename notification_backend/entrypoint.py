@@ -1,6 +1,5 @@
 import logging
 import re
-from notification_backend.notification_tags import NotificationTags
 from notification_backend.notification_threads import NotificationThreads
 from notification_backend.http import format_response
 from notification_backend.http import format_error_payload
@@ -15,38 +14,12 @@ def handler(event, context):
     logger.debug("Received event: %s" % event)
     resource_path = event.get('resource-path')
     http_method = event.get('http-method')
-    tag_name_path = re.match('^/notification/tags/(.+)', resource_path)
     thread_id_path = re.match('^/notification/threads/([0-9]+)$',
                               resource_path)
     thread_params_path = re.match('^/notification/threads(\?.+)?$',
                                   resource_path)
 
-    if http_method == "GET" and resource_path == "/notification/tags":
-        logger.debug("Getting a list of all tags")
-        tags = NotificationTags(event)
-        return tags.process_tag_event("find_all_tags")
-
-    elif http_method == "GET" and tag_name_path:
-        logger.debug("Getting info about tag: %s" % tag_name_path.group(1))
-        tags = NotificationTags(event)
-        return tags.process_tag_event("find_tag")
-
-    elif http_method == "PATCH" and tag_name_path:
-        logger.debug("Updating tag: %s" % tag_name_path.group(1))
-        tags = NotificationTags(event)
-        return tags.process_tag_event("update_tag")
-
-    elif http_method == "POST" and resource_path == "/notification/tags":
-        logger.debug("Creating a new tag")
-        tags = NotificationTags(event)
-        return tags.process_tag_event("create_new_tag")
-
-    elif http_method == "DELETE" and tag_name_path:
-        logger.debug("Deleting tag: %s" % tag_name_path.group(1))
-        tags = NotificationTags(event)
-        return tags.process_tag_event("delete_tag")
-
-    elif http_method == "GET" and thread_id_path:
+    if http_method == "GET" and thread_id_path:
         logger.debug("Getting info about thread: %s" % thread_id_path.group(1))
         t = NotificationThreads(event)
         return t.process_thread_event("find_thread")
@@ -60,6 +33,11 @@ def handler(event, context):
         logger.debug("Updating thread: %s" % thread_id_path.group(1))
         t = NotificationThreads(event)
         return t.process_thread_event("update_thread")
+
+    elif http_method == "DELETE" and thread_id_path:
+        logger.debug("Deleting thread: %s" % thread_id_path.group(1))
+        t = NotificationThreads(event)
+        return t.process_thread_event("delete_thread")
 
     elif http_method == "GET" and resource_path == "/notification/ping":
         payload = {
