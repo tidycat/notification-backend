@@ -15,6 +15,9 @@ from notification_backend.http import dynamodb_update_item
 from notification_backend.http import dynamodb_delete_item
 from notification_backend.time import get_epoch_time
 from notification_backend.time import get_current_epoch_time
+from notification_backend.time import get_iso_datetime_str
+from notification_backend.http import get_notification_threads
+from notification_backend.http import send_sns_message
 
 
 logger = logging.getLogger("notification_backend")
@@ -37,6 +40,7 @@ class NotificationThreads(object):
             self.resource_path = lambda_event.get('resource-path', "")
             self.thread_id_path = re.match('^/notification/threads/(.+)',
                                            self.resource_path)
+            self.lambda_event = lambda_event
 
     def process_thread_event(self, method_name):
         self.token = validate_jwt(self.bearer_token, self.jwt_signing_secret)
@@ -322,3 +326,26 @@ class NotificationThreads(object):
             }
         }
         return format_response(200, payload)
+
+    def backfill_notifications(self):
+        self.lambda_event['resource-path'] = "/notification/backfill_async_trigger"  # NOQA
+        send_sns_message(self.lambda_event, {}, self.lambda_event['notification_sns_arn'])  # NOQA
+        payload = {
+            "meta": {
+                "message": "I'll get to it shortly!"
+            }
+        }
+        return format_response(202, payload)
+
+    def backfill_notifications_asynchronously(self):
+        from_date = get_iso_datetime_str(get_current_epoch_time() - BACKLOG_TIME_LIMIT)  # NOQA
+        notifications = get_notification_threads(
+                            self.token.get('github_token'),
+                            from_date
+                        )
+        for notification in notifications:
+            notif_event = self.lambda_event
+            notif_event['resource-path'] = "/notification/threads/%s" % notification.get('id')  # NOQA
+            notif_event['http-method'] = "GET"
+            send_sns_message(notif_event, {}, self.lambda_event['notification_sns_arn'])  # NOQA
+        logger.debug("Async backfill trigger complete")

@@ -88,3 +88,36 @@ class TestEntrypoint(unittest.TestCase):
         self.assertTrue(call({'resource-path': '/notification/threads/12345', 'http-method': 'DELETE'}) in self.mock_notif_threads.mock_calls)  # NOQA
         self.assertTrue(call().process_thread_event('delete_thread') in self.mock_notif_threads.mock_calls)  # NOQA
         self.assertEqual(len(self.mock_notif_threads.mock_calls), 2)
+
+    def test_backfill_endpoint(self):
+        event = {
+            "resource-path": "/notification/backfill",
+            "http-method": "POST"
+        }
+        handler(event, {})
+        self.assertTrue(call({'resource-path': '/notification/backfill', 'http-method': 'POST'}) in self.mock_notif_threads.mock_calls)  # NOQA
+        self.assertTrue(call().process_thread_event('backfill_notifications') in self.mock_notif_threads.mock_calls)  # NOQA
+        self.assertEqual(len(self.mock_notif_threads.mock_calls), 2)
+
+    def test_async_backfill_endpoint(self):
+        real_event = {
+            "resource-path": "/notification/backfill_async_trigger",
+            "http-method": "POST"
+        }
+        event = {
+            "Records": [
+                {
+                    "EventSource": "aws:sns",
+                    "EventVersion": "1.0",
+                    "Sns": {
+                        "Type": "Notification",
+                        "Subject": "FakeSubjectInvoke",
+                        "Message": json.dumps(real_event)
+                    }
+                }
+            ]
+        }
+        handler(event, {})
+        self.assertTrue(call({'resource-path': '/notification/backfill_async_trigger', 'http-method': 'POST'}) in self.mock_notif_threads.mock_calls)  # NOQA
+        self.assertTrue(call().process_thread_event('backfill_notifications_asynchronously') in self.mock_notif_threads.mock_calls)  # NOQA
+        self.assertEqual(len(self.mock_notif_threads.mock_calls), 2)

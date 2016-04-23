@@ -18,3 +18,8 @@ def get_current_epoch_time():
     now_datetime = now_datetime.replace(tzinfo=pytz.UTC)
     return_val = (now_datetime - epoch_datetime).total_seconds()
     return int(return_val)
+
+
+def get_iso_datetime_str(epoch_time):
+    d = datetime.datetime.fromtimestamp(epoch_time)
+    return d.isoformat()
