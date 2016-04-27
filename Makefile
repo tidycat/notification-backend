@@ -97,12 +97,6 @@ local-dynamodb:  ## Run a local instance of DynamoDB
 init-local-dynamodb:  ## Initialize the local instance of DynamoDB
 	aws dynamodb create-table \
 		--endpoint-url http://localhost:8000 \
-		--table-name "${DYNAMODB_TABLE_NAME_PREFIX}_notification" \
-		--attribute-definitions AttributeName=thread_id,AttributeType=N \
-		--key-schema AttributeName=thread_id,KeyType=HASH \
-		--provisioned-throughput ReadCapacityUnits=1,WriteCapacityUnits=1
-	aws dynamodb create-table \
-		--endpoint-url http://localhost:8000 \
 		--table-name "${DYNAMODB_TABLE_NAME_PREFIX}_user-notification" \
 		--attribute-definitions \
 			AttributeName=user_id,AttributeType=N \
@@ -113,16 +107,6 @@ init-local-dynamodb:  ## Initialize the local instance of DynamoDB
 			AttributeName=thread_id,KeyType=RANGE \
 		--local-secondary-indexes \
 			"IndexName=${DYNAMODB_TABLE_NAME_PREFIX}_user-notification-date,KeySchema=[{AttributeName=user_id,KeyType=HASH},{AttributeName=updated_at,KeyType=RANGE}],Projection={ProjectionType=ALL}" \
-		--provisioned-throughput ReadCapacityUnits=1,WriteCapacityUnits=1
-	aws dynamodb create-table \
-		--endpoint-url http://localhost:8000 \
-		--table-name "${DYNAMODB_TABLE_NAME_PREFIX}_tags" \
-		--attribute-definitions \
-			AttributeName=user_id,AttributeType=N \
-			AttributeName=tag_name,AttributeType=S \
-		--key-schema \
-			AttributeName=user_id,KeyType=HASH \
-			AttributeName=tag_name,KeyType=RANGE \
 		--provisioned-throughput ReadCapacityUnits=1,WriteCapacityUnits=1
 
 # This will need the following environment variables:
