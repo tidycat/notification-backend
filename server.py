@@ -106,7 +106,6 @@ def handle_request(payload, headers, resource_path, http_method):
         "jwt_signing_secret": "supersekr3t",
         "bearer_token": token_header.group(1),
         "notification_dynamodb_endpoint_url": os.environ['DYNAMODB_ENDPOINT_URL'],  # NOQA
-        "notification_tags_dynamodb_table_name": os.environ['NOTIFICATION_TAGS_DYNAMODB_TABLE_NAME'],  # NOQA
         "notification_user_notification_dynamodb_table_name": os.environ['NOTIFICATION_USER_NOTIFICATION_DYNAMODB_TABLE_NAME'],  # NOQA
         "notification_user_notification_date_dynamodb_index_name": os.environ['NOTIFICATION_USER_NOTIFICATION_DATE_DYNAMODB_INDEX_NAME'],  # NOQA
         "notification_sns_arn": "notification-sns-arn",
