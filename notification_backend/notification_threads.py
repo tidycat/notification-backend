@@ -99,6 +99,14 @@ class NotificationThreads(object):
                     "reason": result.get('reason'),
                     "updated-at": int(result.get('updated_at')),
                     "tags": result.get('tags')
+                },
+                "relationships": {
+                    "github-thread": {
+                        "data": {
+                            "id": int(thread_id),
+                            "type": "github-thread"
+                        }
+                    }
                 }
             }
         }
@@ -213,6 +221,14 @@ class NotificationThreads(object):
                         "reason": result.get('reason'),
                         "updated-at": int(result.get('updated_at')),
                         "tags": result.get('tags')
+                    },
+                    "relationships": {
+                        "github-thread": {
+                            "data": {
+                                "id": int(result.get('thread_id')),
+                                "type": "github-thread"
+                            }
+                        }
                     }
                 }
                 thread_list.append(res)
