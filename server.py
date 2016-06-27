@@ -13,6 +13,19 @@ HOST_NAME = sys.argv[1]
 PORT_NUMBER = int(sys.argv[2])
 logger = logging.getLogger("notification_backend")
 
+allowed_headers = [
+    "Content-Type",
+    "Authorization"
+]
+
+allowed_methods = [
+    "OPTIONS",
+    "GET",
+    "POST",
+    "PATCH",
+    "DELETE"
+]
+
 
 class LocalNotificationBackend(BaseHTTPServer.BaseHTTPRequestHandler):
 
@@ -21,14 +34,16 @@ class LocalNotificationBackend(BaseHTTPServer.BaseHTTPRequestHandler):
     def do_OPTIONS(self):
         self.send_response(200)
         self.send_header('Access-Control-Allow-Origin', '*')
-        self.send_header("Access-Control-Allow-Headers", "Content-Type")
+        self.send_header("Access-Control-Allow-Methods", ",".join(allowed_methods))  # NOQA
+        self.send_header("Access-Control-Allow-Headers", ",".join(allowed_headers))  # NOQA
         self.end_headers()
 
     def do_GET(self):
         status, result = handle_request({}, self.headers, self.path, "GET")
         self.send_response(status)
         self.send_header('Access-Control-Allow-Origin', '*')
-        self.send_header("Access-Control-Allow-Headers", "Content-Type")
+        self.send_header("Access-Control-Allow-Methods", ",".join(allowed_methods))  # NOQA
+        self.send_header("Access-Control-Allow-Headers", ",".join(allowed_headers))  # NOQA
         self.send_header("Content-type", "application/json")
         self.end_headers()
         self.wfile.write(json.dumps(result))
@@ -45,7 +60,8 @@ class LocalNotificationBackend(BaseHTTPServer.BaseHTTPRequestHandler):
         )
         self.send_response(status)
         self.send_header('Access-Control-Allow-Origin', '*')
-        self.send_header("Access-Control-Allow-Headers", "Content-Type")
+        self.send_header("Access-Control-Allow-Methods", ",".join(allowed_methods))  # NOQA
+        self.send_header("Access-Control-Allow-Headers", ",".join(allowed_headers))  # NOQA
         self.send_header("Content-type", "application/json")
         self.end_headers()
         self.wfile.write(json.dumps(result))
@@ -62,7 +78,8 @@ class LocalNotificationBackend(BaseHTTPServer.BaseHTTPRequestHandler):
         )
         self.send_response(status)
         self.send_header('Access-Control-Allow-Origin', '*')
-        self.send_header("Access-Control-Allow-Headers", "Content-Type")
+        self.send_header("Access-Control-Allow-Methods", ",".join(allowed_methods))  # NOQA
+        self.send_header("Access-Control-Allow-Headers", ",".join(allowed_headers))  # NOQA
         self.send_header("Content-type", "application/json")
         self.end_headers()
         self.wfile.write(json.dumps(result))
@@ -71,7 +88,8 @@ class LocalNotificationBackend(BaseHTTPServer.BaseHTTPRequestHandler):
         status, result = handle_request({}, self.headers, self.path, "DELETE")
         self.send_response(status)
         self.send_header('Access-Control-Allow-Origin', '*')
-        self.send_header("Access-Control-Allow-Headers", "Content-Type")
+        self.send_header("Access-Control-Allow-Methods", ",".join(allowed_methods))  # NOQA
+        self.send_header("Access-Control-Allow-Headers", allowed_headers.join(","))  # NOQA
         self.send_header("Content-type", "application/json")
         self.end_headers()
         self.wfile.write(json.dumps(result))
