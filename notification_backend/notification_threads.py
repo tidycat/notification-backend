@@ -254,8 +254,11 @@ class NotificationThreads(object):
             return format_response(400, format_error_payload(400, error_msg))
 
         # The PATCH payload needs to have the 'id' member
-        m_thread_id = patch_payload.get('id')
-        if m_thread_id != thread_id:
+        try:
+            m_thread_id = int(patch_payload.get('id'))
+            if m_thread_id != thread_id:
+                raise ValueError
+        except (ValueError, TypeError):
             error_msg = "Invalid 'id' member, should match patch url"
             logger.info(error_msg)
             return format_response(400, format_error_payload(400, error_msg))

@@ -115,6 +115,23 @@ class TestUpdateThread(unittest.TestCase):
         )
         self.assertEqual(self.mock_db_update.mock_calls, [])
 
+    def test_incorrect_thread_id(self):
+        self.lambda_event['payload']['data']['id'] = "12345678"
+        t = NotificationThreads(self.lambda_event)
+        with self.assertRaises(TypeError) as cm:
+            t.process_thread_event("update_thread")
+        result_json = json.loads(str(cm.exception))
+        self.assertEqual(result_json.get('http_status'), 400)
+        self.assertEqual(
+            result_json.get('data').get('errors')[0].get('status'),
+            400
+        )
+        self.assertEqual(
+            result_json.get('data').get('errors')[0].get('detail'),
+            "Invalid 'id' member, should match patch url"
+        )
+        self.assertEqual(self.mock_db_update.mock_calls, [])
+
     def test_error_updating_datastore_boto3error(self):
         self.mock_db_update.side_effect = Boto3Error
         t = NotificationThreads(self.lambda_event)
