@@ -40,7 +40,7 @@ class NotificationThreads(object):
             self.resource_path = lambda_event.get('resource-path', "")
             self.thread_id_path = re.match('^/notification/threads/(.+)',
                                            self.resource_path)
-            self.lambda_event = lambda_event
+        self.lambda_event = lambda_event
 
     def process_thread_event(self, method_name):
         self.token = validate_jwt(self.bearer_token, self.jwt_signing_secret)
