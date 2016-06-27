@@ -78,11 +78,6 @@ class TestFindAllThreads(unittest.TestCase):
         self.assertEqual(result_attrs.get('thread_subscription_url'), "http://api.example.com/fake/12345678/subscribe")  # NOQA
         self.assertEqual(result_attrs.get('reason'), "subscribed")
         self.assertEqual(result_attrs.get('updated_at'), 1460443217)
-        self.assertEqual(result_attrs.get('subject_title'), "Fake Issue")
-        self.assertEqual(result_attrs.get('subject_url'), "http://example.com/fake/12345678")  # NOQA
-        self.assertEqual(result_attrs.get('subject_type'), "Issue")
-        self.assertEqual(result_attrs.get('repository_owner'), "octocat")
-        self.assertEqual(result_attrs.get('repository_name'), "left-pad")
         self.assertTrue(self.mock_db_results.mock_calls > 0)
 
     def test_out_of_range_form_date(self):

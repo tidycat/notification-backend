@@ -98,11 +98,6 @@ class NotificationThreads(object):
                     "thread_subscription_url": result.get('thread_subscription_url'),  # NOQA
                     "reason": result.get('reason'),
                     "updated_at": int(result.get('updated_at')),
-                    "subject_title": result.get('subject_title'),
-                    "subject_url": result.get('subject_url'),
-                    "subject_type": result.get('subject_type'),
-                    "repository_owner": result.get('repository_owner'),
-                    "repository_name": result.get('repository_name'),
                     "tags": result.get('tags')
                 }
             }
@@ -217,11 +212,6 @@ class NotificationThreads(object):
                         "thread_subscription_url": result.get('thread_subscription_url'),  # NOQA
                         "reason": result.get('reason'),
                         "updated_at": int(result.get('updated_at')),
-                        "subject_title": result.get('subject_title'),
-                        "subject_url": result.get('subject_url'),
-                        "subject_type": result.get('subject_type'),
-                        "repository_owner": result.get('repository_owner'),
-                        "repository_name": result.get('repository_name'),
                         "tags": result.get('tags')
                     }
                 }
@@ -256,7 +246,6 @@ class NotificationThreads(object):
 
         # Gather the attributes that need to be updated
         updated_at = patch_payload.get('attributes', {}).get('updated_at')
-        subject_title = patch_payload.get('attributes', {}).get('subject_title')  # NOQA
         reason = patch_payload.get('attributes', {}).get('reason')
         tags = patch_payload.get('attributes', {}).get('tags', [])
 
@@ -268,11 +257,10 @@ class NotificationThreads(object):
         }
         values = {
             ":u": updated_at,
-            ":s": subject_title,
             ":r": reason,
             ":t": tags
         }
-        update_expression = "set updated_at=:u, subject_title=:s, reason=:r, tags=:t"  # NOQA
+        update_expression = "set updated_at=:u, reason=:r, tags=:t"  # NOQA
         try:
             dynamodb_update_item(
                 endpoint_url=self.notification_dynamodb_endpoint_url,
