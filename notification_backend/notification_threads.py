@@ -94,10 +94,10 @@ class NotificationThreads(object):
                 "type": "threads",
                 "id": int(thread_id),
                 "attributes": {
-                    "thread_url": result.get('thread_url'),
-                    "thread_subscription_url": result.get('thread_subscription_url'),  # NOQA
+                    "thread-url": result.get('thread_url'),
+                    "thread-subscription-url": result.get('thread_subscription_url'),  # NOQA
                     "reason": result.get('reason'),
-                    "updated_at": int(result.get('updated_at')),
+                    "updated-at": int(result.get('updated_at')),
                     "tags": result.get('tags')
                 }
             }
@@ -208,10 +208,10 @@ class NotificationThreads(object):
                     "type": "threads",
                     "id": int(result.get('thread_id')),
                     "attributes": {
-                        "thread_url": result.get('thread_url'),
-                        "thread_subscription_url": result.get('thread_subscription_url'),  # NOQA
+                        "thread-url": result.get('thread_url'),
+                        "thread-subscription-url": result.get('thread_subscription_url'),  # NOQA
                         "reason": result.get('reason'),
-                        "updated_at": int(result.get('updated_at')),
+                        "updated-at": int(result.get('updated_at')),
                         "tags": result.get('tags')
                     }
                 }
@@ -245,7 +245,7 @@ class NotificationThreads(object):
             return format_response(400, format_error_payload(400, error_msg))
 
         # Gather the attributes that need to be updated
-        updated_at = patch_payload.get('attributes', {}).get('updated_at')
+        updated_at = patch_payload.get('attributes', {}).get('updated-at')
         reason = patch_payload.get('attributes', {}).get('reason')
         tags = patch_payload.get('attributes', {}).get('tags', [])
 
