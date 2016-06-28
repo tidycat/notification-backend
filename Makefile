@@ -57,7 +57,7 @@ test: checkstyle unit-test  ## Run all the acceptance tests locally
 
 .PHONY: server
 server:  ## Run the local development server
-	$(ENV)/bin/python server.py 0.0.0.0 8080
+	$(ENV)/bin/python server.py 0.0.0.0 8081
 
 # e.g. PART=major make release
 # e.g. PART=minor make release
@@ -91,12 +91,12 @@ local-dynamodb:  ## Run a local instance of DynamoDB
 		-sharedDb \
 		-dbPath ./dynamodb_sample_data \
 		-delayTransientStatuses \
-		-port 8000
+		-port ${DYNAMODB_LOCAL_PORT}
 
 .PHONY: init-local-dynamodb
 init-local-dynamodb:  ## Initialize the local instance of DynamoDB
 	aws dynamodb create-table \
-		--endpoint-url http://localhost:8000 \
+		--endpoint-url ${DYNAMODB_ENDPOINT_URL} \
 		--table-name "${DYNAMODB_TABLE_NAME_PREFIX}_user-notification" \
 		--attribute-definitions \
 			AttributeName=user_id,AttributeType=N \
