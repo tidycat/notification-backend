@@ -40,7 +40,7 @@ class NotificationThreads(object):
             self.resource_path = lambda_event.get('resource-path', "")
             self.thread_id_path = re.match('^/notification/threads/(.+)',
                                            self.resource_path)
-            self.lambda_event = lambda_event
+        self.lambda_event = lambda_event
 
     def process_thread_event(self, method_name):
         self.token = validate_jwt(self.bearer_token, self.jwt_signing_secret)
@@ -94,16 +94,19 @@ class NotificationThreads(object):
                 "type": "threads",
                 "id": int(thread_id),
                 "attributes": {
-                    "thread_url": result.get('thread_url'),
-                    "thread_subscription_url": result.get('thread_subscription_url'),  # NOQA
+                    "thread-url": result.get('thread_url'),
+                    "thread-subscription-url": result.get('thread_subscription_url'),  # NOQA
                     "reason": result.get('reason'),
-                    "updated_at": int(result.get('updated_at')),
-                    "subject_title": result.get('subject_title'),
-                    "subject_url": result.get('subject_url'),
-                    "subject_type": result.get('subject_type'),
-                    "repository_owner": result.get('repository_owner'),
-                    "repository_name": result.get('repository_name'),
+                    "updated-at": int(result.get('updated_at')),
                     "tags": result.get('tags')
+                },
+                "relationships": {
+                    "github-thread": {
+                        "data": {
+                            "id": int(thread_id),
+                            "type": "github-thread"
+                        }
+                    }
                 }
             }
         }
@@ -213,16 +216,19 @@ class NotificationThreads(object):
                     "type": "threads",
                     "id": int(result.get('thread_id')),
                     "attributes": {
-                        "thread_url": result.get('thread_url'),
-                        "thread_subscription_url": result.get('thread_subscription_url'),  # NOQA
+                        "thread-url": result.get('thread_url'),
+                        "thread-subscription-url": result.get('thread_subscription_url'),  # NOQA
                         "reason": result.get('reason'),
-                        "updated_at": int(result.get('updated_at')),
-                        "subject_title": result.get('subject_title'),
-                        "subject_url": result.get('subject_url'),
-                        "subject_type": result.get('subject_type'),
-                        "repository_owner": result.get('repository_owner'),
-                        "repository_name": result.get('repository_name'),
+                        "updated-at": int(result.get('updated_at')),
                         "tags": result.get('tags')
+                    },
+                    "relationships": {
+                        "github-thread": {
+                            "data": {
+                                "id": int(result.get('thread_id')),
+                                "type": "github-thread"
+                            }
+                        }
                     }
                 }
                 thread_list.append(res)
@@ -248,15 +254,17 @@ class NotificationThreads(object):
             return format_response(400, format_error_payload(400, error_msg))
 
         # The PATCH payload needs to have the 'id' member
-        m_thread_id = patch_payload.get('id')
-        if m_thread_id != thread_id:
+        try:
+            m_thread_id = int(patch_payload.get('id'))
+            if m_thread_id != thread_id:
+                raise ValueError
+        except (ValueError, TypeError):
             error_msg = "Invalid 'id' member, should match patch url"
             logger.info(error_msg)
             return format_response(400, format_error_payload(400, error_msg))
 
         # Gather the attributes that need to be updated
-        updated_at = patch_payload.get('attributes', {}).get('updated_at')
-        subject_title = patch_payload.get('attributes', {}).get('subject_title')  # NOQA
+        updated_at = patch_payload.get('attributes', {}).get('updated-at')
         reason = patch_payload.get('attributes', {}).get('reason')
         tags = patch_payload.get('attributes', {}).get('tags', [])
 
@@ -268,11 +276,10 @@ class NotificationThreads(object):
         }
         values = {
             ":u": updated_at,
-            ":s": subject_title,
             ":r": reason,
             ":t": tags
         }
-        update_expression = "set updated_at=:u, subject_title=:s, reason=:r, tags=:t"  # NOQA
+        update_expression = "set updated_at=:u, reason=:r, tags=:t"  # NOQA
         try:
             dynamodb_update_item(
                 endpoint_url=self.notification_dynamodb_endpoint_url,

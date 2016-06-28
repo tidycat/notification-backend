@@ -103,15 +103,10 @@ class TestFindThread(unittest.TestCase):
         self.assertEqual(result_json.get('http_status'), 200)
         self.assertEqual(result_json.get('data').get('data').get('type'), "threads")  # NOQA
         self.assertEqual(result_json.get('data').get('data').get('id'), 12345678)  # NOQA
-        self.assertEqual(result_attrs.get('thread_url'), "http://api.example.com/fake/12345678")  # NOQA
-        self.assertEqual(result_attrs.get('thread_subscription_url'), "http://api.example.com/fake/12345678/subscribe")  # NOQA
+        self.assertEqual(result_attrs.get('thread-url'), "http://api.example.com/fake/12345678")  # NOQA
+        self.assertEqual(result_attrs.get('thread-subscription-url'), "http://api.example.com/fake/12345678/subscribe")  # NOQA
         self.assertEqual(result_attrs.get('reason'), "subscribed")
-        self.assertEqual(result_attrs.get('updated_at'), 1460443217)
-        self.assertEqual(result_attrs.get('subject_title'), "Fake Issue")
-        self.assertEqual(result_attrs.get('subject_url'), "http://example.com/fake/12345678")  # NOQA
-        self.assertEqual(result_attrs.get('subject_type'), "Issue")
-        self.assertEqual(result_attrs.get('repository_owner'), "octocat")
-        self.assertEqual(result_attrs.get('repository_name'), "left-pad")
+        self.assertEqual(result_attrs.get('updated-at'), 1460443217)
         self.assertTrue(self.mock_db_results.mock_calls > 0)
 
     @responses.activate
@@ -246,15 +241,10 @@ class TestFindThread(unittest.TestCase):
         self.assertEqual(result_json.get('http_status'), 200)
         self.assertEqual(result_json.get('data').get('data').get('type'), "threads")  # NOQA
         self.assertEqual(result_json.get('data').get('data').get('id'), 12345678)  # NOQA
-        self.assertEqual(result_attrs.get('thread_url'), "https://api.github.com/notifications/threads/12345678")  # NOQA
-        self.assertEqual(result_attrs.get('thread_subscription_url'), "https://api.github.com/notifications/threads/12345678/subscription")  # NOQA
+        self.assertEqual(result_attrs.get('thread-url'), "https://api.github.com/notifications/threads/12345678")  # NOQA
+        self.assertEqual(result_attrs.get('thread-subscription-url'), "https://api.github.com/notifications/threads/12345678/subscription")  # NOQA
         self.assertEqual(result_attrs.get('reason'), "manual")
-        self.assertEqual(result_attrs.get('updated_at'), 1460425217)
-        self.assertEqual(result_attrs.get('subject_title'), "Support AWS APIGateway")  # NOQA
-        self.assertEqual(result_attrs.get('subject_url'), "https://api.github.com/repos/hashicorp/terraform/issues/3675")  # NOQA
-        self.assertEqual(result_attrs.get('subject_type'), "Issue")
-        self.assertEqual(result_attrs.get('repository_owner'), "hashicorp")
-        self.assertEqual(result_attrs.get('repository_name'), "terraform")
+        self.assertEqual(result_attrs.get('updated-at'), 1460425217)
         tags = result_json.get('data').get('data').get('attributes').get('tags')  # NOQA
         self.assertEqual(len(tags), 4)
         self.assertTrue('subscribed' in tags)
