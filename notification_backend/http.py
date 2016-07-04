@@ -2,7 +2,6 @@ import json
 import jwt
 import boto3
 import logging
-import requests
 
 
 logger = logging.getLogger("notification_backend")
@@ -94,50 +93,3 @@ def dynamodb_update_item(endpoint_url,
         kwargs.update({"ConditionExpression": condition_expression})
     result = table.update_item(**kwargs)
     return result
-
-
-def get_notification_threads(gh_bearer_token, from_date):
-    more_results = True
-    headers = {
-        "Accept": "application/json",
-        "Authorization": "Bearer %s" % gh_bearer_token
-    }
-    url = 'https://api.github.com/notifications?all=true&since=%s' % from_date
-    while more_results:
-        r = requests.get(url, headers=headers)
-        if not r.status_code == 200:
-            logger.error("Could not fetch notifications")
-            logger.error("HTTP response code from GitHub: %s" % r.status_code)
-            logger.error("URL: %s" % r.url)
-            logger.error("Headers: %s" % r.headers)
-            logger.error("Response: %s" % r.text)
-            raise StopIteration
-        try:
-            thread_json = r.json()
-        except ValueError as e:
-            logger.error("Could not parse JSON from response %s. Error: %s" % (r.text, str(e)))  # NOQA
-            raise StopIteration
-
-        for result in thread_json:
-            yield result
-
-        more_results = False
-        if 'next' in r.links:
-            more_results = True
-            url = r.links['next'].get('url')
-
-
-def send_sns_message(event, context, topic_arn):  # pragma: no cover
-    logger.info("Publishing SNS message for endpoint: %s" % event.get('resource-path'))  # NOQA
-    client = boto3.client('sns')
-    response = client.publish(TopicArn=topic_arn, Message=json.dumps(event))
-    logger.debug("SNS publish result: %s" % response)
-
-
-def is_sns_event(event):
-    """
-    Determine if the event we just received is an SNS event
-    """
-    if "Records" in event:
-        return True
-    return False

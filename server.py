@@ -5,7 +5,6 @@ import json
 import os
 import re
 import logging
-from mock import patch
 from notification_backend.entrypoint import handler
 
 
@@ -95,25 +94,6 @@ class LocalNotificationBackend(BaseHTTPServer.BaseHTTPRequestHandler):
         self.wfile.write(json.dumps(result))
 
 
-def fake_sns_message(event, context, topic_arn):
-    logger.info("Publishing fake SNS message for endpoint: %s" % event.get('resource-path'))  # NOQA
-    sns_event = {
-        "Records": [
-            {
-                "EventSource": "aws:sns",
-                "EventVersion": "1.0",
-                "Sns": {
-                    "Type": "Notification",
-                    "Subject": "FakeSubjectInvoke",
-                    "Message": json.dumps(event)
-                }
-            }
-        ]
-    }
-    handler(sns_event, {})
-
-
-@patch('notification_backend.notification_threads.send_sns_message', fake_sns_message)  # NOQA
 def handle_request(payload, headers, resource_path, http_method):
     token_header = re.match('^Bearer (.+)',
                             headers.get("Authorization", "Bearer faketoken"))
@@ -126,7 +106,6 @@ def handle_request(payload, headers, resource_path, http_method):
         "notification_dynamodb_endpoint_url": os.environ['DYNAMODB_ENDPOINT_URL'],  # NOQA
         "notification_user_notification_dynamodb_table_name": os.environ['NOTIFICATION_USER_NOTIFICATION_DYNAMODB_TABLE_NAME'],  # NOQA
         "notification_user_notification_date_dynamodb_index_name": os.environ['NOTIFICATION_USER_NOTIFICATION_DATE_DYNAMODB_INDEX_NAME'],  # NOQA
-        "notification_sns_arn": "notification-sns-arn",
     }
     try:
         response_payload = handler(event, {})

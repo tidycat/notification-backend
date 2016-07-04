@@ -20,8 +20,6 @@ GitHub notifications.
 
 - Conforms to the [JSON API](http://jsonapi.org) specification.
 
-- Handles backfilling GitHub notifications via asynchronous Lambda invocations.
-
 
 ## API Endpoints
 
@@ -31,7 +29,6 @@ GitHub notifications.
 | `/notification/threads/1234` | `GET` | Return all the information relevant to notification id `1234`. |
 | `/notification/threads/1234` | `PATCH` | Update the information pertinent to notification id `1234`. |
 | `/notification/threads/1234` | `DELETE` | Delete notification id `1234`. |
-| `/notification/backfill` | `POST` | Populate the user's notifications for the last little while. |
 | `/notification/ping` | `GET` | Return the currently running version of the Lambda function. |
 
 
@@ -56,13 +53,10 @@ GitHub notifications.
             "Action": [
                 "logs:CreateLogGroup",
                 "logs:CreateLogStream",
-                "logs:PutLogEvents",
-                "sns:Publish",
-                "sns:Subscribe"
+                "logs:PutLogEvents"
             ],
             "Resource": [
-                "arn:aws:logs:*:*:*",
-                "arn:aws:sns:*"
+                "arn:aws:logs:*:*:*"
             ]
         },
         {
@@ -88,12 +82,6 @@ GitHub notifications.
 - Timeout: 30 seconds
 
 
-#### Setup the SNS topic and subscription
-
-- Name: `tidycat-notification-backend`
-- Ensure that the Lambda function is subscribed to this SNS topic.
-
-
 #### Setup API Gateway:
 
 Create the following API Gateway resources and methods:
@@ -106,8 +94,6 @@ Create the following API Gateway resources and methods:
         GET
         PATCH
         DELETE
-    /backfill
-      POST
     /ping
       GET
 ```
@@ -132,8 +118,7 @@ methods above:
       "bearer_token": "$input.params().header.get('Authorization')",
       "notification_dynamodb_endpoint_url": "${stageVariables.notification_dynamodb_endpoint_url}",
       "notification_user_notification_dynamodb_table_name": "${stageVariables.notification_user_notification_dynamodb_table_name}",
-      "notification_user_notification_date_dynamodb_index_name": "${stageVariables.notification_user_notification_date_dynamodb_index_name}",
-      "notification_sns_arn": "${stageVariables.notification_sns_arn}"
+      "notification_user_notification_date_dynamodb_index_name": "${stageVariables.notification_user_notification_date_dynamodb_index_name}"
     }
     ```
 
@@ -170,7 +155,6 @@ Finally, ensure that the following **Stage Variables** are set appropriately:
 - `notification_dynamodb_endpoint_url` (e.g. `https://dynamodb.us-east-1.amazonaws.com`)
 - `notification_user_notification_dynamodb_table_name`
 - `notification_user_notification_date_dynamodb_index_name`
-- `notification_sns_arn`
 
 This will seem cumbersome and thankfully doesn't need to be revisited very
 often!
