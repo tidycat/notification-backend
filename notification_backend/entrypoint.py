@@ -1,10 +1,8 @@
 import logging
 import re
-import json
 from notification_backend.notification_threads import NotificationThreads
 from notification_backend.http import format_response
 from notification_backend.http import format_error_payload
-from notification_backend.http import is_sns_event
 
 __version__ = "0.0.1"
 logging.basicConfig()
@@ -14,12 +12,6 @@ logger.setLevel(logging.INFO)
 
 def handler(event, context):
     logger.debug("Received event: %s" % event)
-
-    if is_sns_event(event):
-        record = event['Records'][0]
-        msg_str = record['Sns'].get('Message')
-        event = json.loads(msg_str)
-        logger.debug("Record: %s" % event)
 
     resource_path = event.get('resource-path')
     http_method = event.get('http-method')
@@ -47,16 +39,6 @@ def handler(event, context):
         logger.debug("Deleting thread: %s" % thread_id_path.group(1))
         t = NotificationThreads(event)
         return t.process_thread_event("delete_thread")
-
-    elif http_method == "POST" and resource_path == "/notification/backfill":
-        logger.debug("Backfilling all notifications for the last little bit")
-        t = NotificationThreads(event)
-        return t.process_thread_event("backfill_notifications")
-
-    elif http_method == "POST" and resource_path == "/notification/backfill_async_trigger":  # NOQA
-        logger.debug("Triggering async backfill function")
-        t = NotificationThreads(event)
-        return t.process_thread_event("backfill_notifications_asynchronously")
 
     elif http_method == "GET" and resource_path == "/notification/ping":
         payload = {
