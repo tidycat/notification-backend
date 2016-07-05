@@ -2,6 +2,7 @@ import json
 import jwt
 import boto3
 import logging
+import re
 
 
 logger = logging.getLogger("notification_backend")
@@ -30,8 +31,12 @@ def format_response(http_status_code, payload):
 
 
 def validate_jwt(token, secret):
+    token_header = re.match('^Bearer (.+)', token)
+    if not token_header:
+        logger.debug("Could not match bearer token - Authorization header probably missing")  # NOQA
+        return None
     try:
-        return jwt.decode(token, secret)
+        return jwt.decode(token_header.group(1), secret)
     except jwt.exceptions.InvalidTokenError as e:
         logger.debug("Invalid Token Error: %s" % str(e))
         return None

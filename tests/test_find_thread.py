@@ -24,7 +24,7 @@ class TestFindThread(unittest.TestCase):
                                 algorithm='HS256')
         self.lambda_event = {
             "jwt_signing_secret": self.jwt_signing_secret,
-            "bearer_token": self.token,
+            "bearer_token": "Bearer %s" % self.token,
             "payload": {},
             "resource-path": "/notification/threads/12345678",
             "notification_dynamodb_endpoint_url": "http://example.com",
@@ -51,7 +51,7 @@ class TestFindThread(unittest.TestCase):
         self.token = jwt.encode({"subs": "user1"},
                                 self.jwt_signing_secret,
                                 algorithm='HS256')
-        self.lambda_event['bearer_token'] = self.token
+        self.lambda_event['bearer_token'] = "Bearer %s" % self.token
         t = NotificationThreads(self.lambda_event)
         with self.assertRaises(TypeError) as cm:
             t.process_thread_event("find_thread")
@@ -64,6 +64,22 @@ class TestFindThread(unittest.TestCase):
         self.assertEqual(
             result_json.get('data').get('errors')[0].get('detail'),
             "sub field not present in JWT"
+        )
+
+    def test_empty_auth_header(self):
+        self.lambda_event['bearer_token'] = ""
+        t = NotificationThreads(self.lambda_event)
+        with self.assertRaises(TypeError) as cm:
+            t.process_thread_event("find_thread")
+        result_json = json.loads(str(cm.exception))
+        self.assertEqual(result_json.get('http_status'), 401)
+        self.assertEqual(
+            result_json.get('data').get('errors')[0].get('status'),
+            401
+        )
+        self.assertEqual(
+            result_json.get('data').get('errors')[0].get('detail'),
+            "Invalid JSON Web Token"
         )
 
     def test_datastore_query_error(self):

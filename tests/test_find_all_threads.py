@@ -26,7 +26,7 @@ class TestFindAllThreads(unittest.TestCase):
                                 algorithm='HS256')
         self.lambda_event = {
             "jwt_signing_secret": self.jwt_signing_secret,
-            "bearer_token": self.token,
+            "bearer_token": "Bearer %s" % self.token,
             "payload": {},
             "resource-path": "/notification/threads",
             "notification_dynamodb_endpoint_url": "http://example.com",

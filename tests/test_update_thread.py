@@ -19,7 +19,7 @@ class TestUpdateThread(unittest.TestCase):
                                 algorithm='HS256')
         self.lambda_event = {
             "jwt_signing_secret": self.jwt_signing_secret,
-            "bearer_token": self.token,
+            "bearer_token": "Bearer %s" % self.token,
             "resource-path": "/notification/threads/123456",
             "payload": {
                 "data": {
