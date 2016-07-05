@@ -1,7 +1,5 @@
 import logging
-import re
 import requests
-import urlparse
 from boto3.exceptions import Boto3Error
 from botocore.exceptions import ClientError
 from botocore.exceptions import BotoCoreError
@@ -30,13 +28,13 @@ class NotificationThreads(object):
                      "bearer_token",
                      "notification_dynamodb_endpoint_url",
                      "notification_user_notification_dynamodb_table_name",
-                     "notification_user_notification_date_dynamodb_index_name"]:  # NOQA
+                     "notification_user_notification_date_dynamodb_index_name",
+                     "qs_from"]:
             setattr(self, prop, lambda_event.get(prop))
             self.token = None
             self.userid = None
             self.resource_path = lambda_event.get('resource-path', "")
-            self.thread_id_path = re.match('^/notification/threads/(.+)',
-                                           self.resource_path)
+            self.threadid = lambda_event.get('threadid', '0')
         self.lambda_event = lambda_event
 
     def process_thread_event(self, method_name):
@@ -56,7 +54,7 @@ class NotificationThreads(object):
         return method_to_call()
 
     def find_thread(self):
-        thread_id = self.thread_id_path.group(1)
+        thread_id = self.threadid
         result = {}
         try:
             results = dynamodb_results(
@@ -181,13 +179,8 @@ class NotificationThreads(object):
 
     def find_all_threads(self):
         current_epoch_time = get_current_epoch_time()
-        params = urlparse.parse_qs(urlparse.urlparse(self.resource_path).query)
-        self.from_date = params.get('from')
-        if self.from_date:
-            # urlparse.parse_qs returns a list of values corresponding to the
-            # specified key, we only effectively care about the first value
-            self.from_date = self.from_date[0]
-        else:
+        self.from_date = self.qs_from
+        if not self.from_date:
             self.from_date = current_epoch_time - DEFAULT_BACKLOG_SEARCH_TIME
 
         try:
@@ -240,7 +233,7 @@ class NotificationThreads(object):
         return format_response(200, payload)
 
     def update_thread(self):
-        thread_id = int(self.thread_id_path.group(1))
+        thread_id = int(self.threadid)
         patch_payload = self.payload.get('data', {})
 
         # The PATCH payload needs to have the 'type' member
@@ -298,7 +291,7 @@ class NotificationThreads(object):
         return format_response(200, payload)
 
     def delete_thread(self):
-        thread_id = int(self.thread_id_path.group(1))
+        thread_id = int(self.threadid)
         key = {
             "user_id": self.userid,
             "thread_id": thread_id

@@ -4,6 +4,7 @@ import time
 import json
 import os
 import logging
+import re
 from notification_backend.entrypoint import handler
 
 
@@ -94,6 +95,19 @@ class LocalNotificationBackend(BaseHTTPServer.BaseHTTPRequestHandler):
 
 
 def handle_request(payload, headers, resource_path, http_method):
+    threadid = None
+    thread_id_path = re.match('^/notification/threads/([0-9]+)$', resource_path)  # NOQA
+    if thread_id_path:
+        resource_path = "/notification/threads/{thread-id}"
+        threadid = thread_id_path.group(1)
+
+    qs_from = None
+    # qs_from_path = re.match('^/notification/threads(\?.+)?$', resource_path)
+    qs_from_path = re.match('^/notification/threads\?from=(.+)$', resource_path)  # NOQA
+    if qs_from_path:
+        resource_path = "/notification/threads"
+        qs_from = qs_from_path.group(1)
+
     event = {
         "resource-path": resource_path,
         "payload": payload,
@@ -103,6 +117,8 @@ def handle_request(payload, headers, resource_path, http_method):
         "notification_dynamodb_endpoint_url": os.environ['DYNAMODB_ENDPOINT_URL'],  # NOQA
         "notification_user_notification_dynamodb_table_name": os.environ['NOTIFICATION_USER_NOTIFICATION_DYNAMODB_TABLE_NAME'],  # NOQA
         "notification_user_notification_date_dynamodb_index_name": os.environ['NOTIFICATION_USER_NOTIFICATION_DATE_DYNAMODB_INDEX_NAME'],  # NOQA
+        "threadid": threadid,
+        "qs_from": qs_from,
     }
     try:
         response_payload = handler(event, {})
