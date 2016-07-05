@@ -21,7 +21,8 @@ class TestDeleteThread(unittest.TestCase):
         self.lambda_event = {
             "jwt_signing_secret": self.jwt_signing_secret,
             "bearer_token": "Bearer %s" % self.token,
-            "resource-path": "/notification/threads/123456",
+            "resource-path": "/notification/threads/{thread-id}",
+            "threadid": "123456",
             "payload": {
                 "data": {
                     "id": 123456,

@@ -50,7 +50,7 @@ class TestFindAllThreads(unittest.TestCase):
         }]
 
     def test_invalid_from_date(self):
-        self.lambda_event['resource-path'] = "/notification/threads?from=faketest"  # NOQA
+        self.lambda_event['qs_from'] = "faketest"
         t = NotificationThreads(self.lambda_event)
         with self.assertRaises(TypeError) as cm:
             t.process_thread_event("find_all_threads")
@@ -81,7 +81,7 @@ class TestFindAllThreads(unittest.TestCase):
         self.assertTrue(self.mock_db_results.mock_calls > 0)
 
     def test_out_of_range_form_date(self):
-        self.lambda_event['resource-path'] = "/notification/threads?from=0"
+        self.lambda_event['qs_from'] = "0"
         expected_from_date = self.mock_time.return_value - self.backlog_time_limit  # NOQA
         t = NotificationThreads(self.lambda_event)
         t.process_thread_event("find_all_threads")

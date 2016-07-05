@@ -1,5 +1,4 @@
 import logging
-import re
 from notification_backend.notification_threads import NotificationThreads
 from notification_backend.http import format_response
 from notification_backend.http import format_error_payload
@@ -15,28 +14,24 @@ def handler(event, context):
 
     resource_path = event.get('resource-path')
     http_method = event.get('http-method')
-    thread_id_path = re.match('^/notification/threads/([0-9]+)$',
-                              resource_path)
-    thread_params_path = re.match('^/notification/threads(\?.+)?$',
-                                  resource_path)
 
-    if http_method == "GET" and thread_id_path:
-        logger.debug("Getting info about thread: %s" % thread_id_path.group(1))
-        t = NotificationThreads(event)
-        return t.process_thread_event("find_thread")
-
-    elif http_method == "GET" and thread_params_path:
+    if http_method == "GET" and resource_path == "/notification/threads":
         logger.debug("Getting a list of all threads")
         t = NotificationThreads(event)
         return t.process_thread_event("find_all_threads")
 
-    elif http_method == "PATCH" and thread_id_path:
-        logger.debug("Updating thread: %s" % thread_id_path.group(1))
+    elif http_method == "GET" and resource_path == "/notification/threads/{thread-id}":  # NOQA
+        logger.debug("Getting info about thread: %s" % event.get('threadid'))
+        t = NotificationThreads(event)
+        return t.process_thread_event("find_thread")
+
+    elif http_method == "PATCH" and resource_path == "/notification/threads/{thread-id}":  # NOQA
+        logger.debug("Updating thread: %s" % event.get('threadid'))
         t = NotificationThreads(event)
         return t.process_thread_event("update_thread")
 
-    elif http_method == "DELETE" and thread_id_path:
-        logger.debug("Deleting thread: %s" % thread_id_path.group(1))
+    elif http_method == "DELETE" and resource_path == "/notification/threads/{thread-id}":  # NOQA
+        logger.debug("Deleting thread: %s" % event.get('threadid'))
         t = NotificationThreads(event)
         return t.process_thread_event("delete_thread")
 

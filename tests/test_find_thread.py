@@ -26,7 +26,8 @@ class TestFindThread(unittest.TestCase):
             "jwt_signing_secret": self.jwt_signing_secret,
             "bearer_token": "Bearer %s" % self.token,
             "payload": {},
-            "resource-path": "/notification/threads/12345678",
+            "resource-path": "/notification/threads/{thread-id}",
+            "threadid": "12345678",
             "notification_dynamodb_endpoint_url": "http://example.com",
             "notification_user_notification_dynamodb_table_name": "fakethreads"
         }
