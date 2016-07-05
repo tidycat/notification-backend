@@ -3,7 +3,6 @@ import sys
 import time
 import json
 import os
-import re
 import logging
 from notification_backend.entrypoint import handler
 
@@ -95,14 +94,12 @@ class LocalNotificationBackend(BaseHTTPServer.BaseHTTPRequestHandler):
 
 
 def handle_request(payload, headers, resource_path, http_method):
-    token_header = re.match('^Bearer (.+)',
-                            headers.get("Authorization", "Bearer faketoken"))
     event = {
         "resource-path": resource_path,
         "payload": payload,
         "http-method": http_method,
         "jwt_signing_secret": "supersekr3t",
-        "bearer_token": token_header.group(1),
+        "bearer_token": headers.get("Authorization"),
         "notification_dynamodb_endpoint_url": os.environ['DYNAMODB_ENDPOINT_URL'],  # NOQA
         "notification_user_notification_dynamodb_table_name": os.environ['NOTIFICATION_USER_NOTIFICATION_DYNAMODB_TABLE_NAME'],  # NOQA
         "notification_user_notification_date_dynamodb_index_name": os.environ['NOTIFICATION_USER_NOTIFICATION_DATE_DYNAMODB_INDEX_NAME'],  # NOQA
